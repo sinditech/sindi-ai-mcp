@@ -1,0 +1,60 @@
+package za.co.sindi.ai.mcp.client;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import za.co.sindi.ai.mcp.schema.CallToolResult;
+import za.co.sindi.ai.mcp.schema.EmptyResult;
+import za.co.sindi.ai.mcp.schema.CompleteRequest.Argument;
+import za.co.sindi.ai.mcp.schema.CompleteResult.Completion;
+import za.co.sindi.ai.mcp.schema.GetPromptResult;
+import za.co.sindi.ai.mcp.schema.InitializeResult;
+import za.co.sindi.ai.mcp.schema.LoggingLevel;
+import za.co.sindi.ai.mcp.schema.Reference;
+import za.co.sindi.ai.mcp.schema.Resource;
+import za.co.sindi.ai.mcp.schema.ResourceContents;
+import za.co.sindi.ai.mcp.schema.ResourceTemplate;
+import za.co.sindi.ai.mcp.schema.Root;
+import za.co.sindi.ai.mcp.schema.Tool;
+
+/**
+ * @author Buhake Sindi
+ * @since 21 February 2025
+ */
+public interface MCPAsyncClient {
+
+	public CompletableFuture<InitializeResult> initializeAsync();
+	
+	public CompletableFuture<EmptyResult> pingAsync();
+	
+	public CompletableFuture<Resource[]> listResourcesAsync();
+	
+	public CompletableFuture<ResourceTemplate[]> listResourceTemplatesAsync();
+	
+	public CompletableFuture<ResourceContents[]> readResourceAsync(final String uri);
+	
+	public CompletableFuture<Void> subscribeResourceAsync(final String uri);
+	
+	public CompletableFuture<Void> unsubscribeResourceAsync(final String uri);
+	
+	public CompletableFuture<GetPromptResult> getPromptAsync(final String name, final Map<String, String> arguments);
+	
+	default CompletableFuture<Tool[]> listToolsAsync() {
+		return listToolsAsync(null);
+	}
+	
+	public CompletableFuture<Tool[]> listToolsAsync(final String cursor);
+	
+	public CompletableFuture<CallToolResult> callToolAsync(final String name, final Map<String, Object> arguments);
+	
+	public CompletableFuture<Void> setLoggingLevelAsync(final LoggingLevel level);
+	
+	public CompletableFuture<Completion> completeAsync(final Reference reference, final Argument argument);
+	
+	public CompletableFuture<Void> sendRootListChangedAsync();
+	
+	public CompletableFuture<Void> addRootAsync(final Root root);
+	
+	public CompletableFuture<Void> removeRootAsync(final String uri);
+	
+}
