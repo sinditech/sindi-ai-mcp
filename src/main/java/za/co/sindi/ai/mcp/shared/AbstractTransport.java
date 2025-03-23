@@ -3,7 +3,9 @@ package za.co.sindi.ai.mcp.shared;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.logging.Logger;
 
+import za.co.sindi.ai.mcp.client.StdioClientTransport;
 import za.co.sindi.ai.mcp.mapper.ObjectMapper;
 
 /**
@@ -11,6 +13,8 @@ import za.co.sindi.ai.mcp.mapper.ObjectMapper;
  * @since 16 February 2025
  */
 public abstract class AbstractTransport implements Transport {
+	
+	protected final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 	
 	private Duration requestTimeout;
 	
