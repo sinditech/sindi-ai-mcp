@@ -1,4 +1,4 @@
-package za.co.sindi.ai.mcp.shared;
+package za.co.sindi.ai.mcp.client;
 
 import java.util.Objects;
 
@@ -8,6 +8,8 @@ import za.co.sindi.ai.mcp.schema.ClientRequest;
 import za.co.sindi.ai.mcp.schema.ClientResult;
 import za.co.sindi.ai.mcp.schema.Implementation;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
+import za.co.sindi.ai.mcp.shared.ClientTransport;
+import za.co.sindi.ai.mcp.shared.Protocol;
 
 /**
  * @author Buhake Sindi

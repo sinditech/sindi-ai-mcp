@@ -4,10 +4,11 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import za.co.sindi.ai.mcp.schema.CallToolResult;
-import za.co.sindi.ai.mcp.schema.EmptyResult;
+import za.co.sindi.ai.mcp.schema.ClientCapabilities;
 import za.co.sindi.ai.mcp.schema.CompleteRequest.Argument;
 import za.co.sindi.ai.mcp.schema.CompleteResult.Completion;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
+import za.co.sindi.ai.mcp.schema.Implementation;
 import za.co.sindi.ai.mcp.schema.InitializeResult;
 import za.co.sindi.ai.mcp.schema.LoggingLevel;
 import za.co.sindi.ai.mcp.schema.Reference;
@@ -23,9 +24,9 @@ import za.co.sindi.ai.mcp.schema.Tool;
  */
 public interface MCPAsyncClient {
 
-	public CompletableFuture<InitializeResult> initializeAsync();
+	public CompletableFuture<InitializeResult> initializeAsync(final ClientCapabilities clientCapabilities, final Implementation clientInfo);
 	
-	public CompletableFuture<EmptyResult> pingAsync();
+	public CompletableFuture<Void> pingAsync();
 	
 	public CompletableFuture<Resource[]> listResourcesAsync();
 	

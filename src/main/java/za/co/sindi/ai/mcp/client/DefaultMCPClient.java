@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.logging.Logger;
 
 import za.co.sindi.ai.mcp.schema.CallToolRequest;
 import za.co.sindi.ai.mcp.schema.CallToolRequest.CallToolRequestParameters;
@@ -14,6 +16,8 @@ import za.co.sindi.ai.mcp.schema.CompleteRequest.Argument;
 import za.co.sindi.ai.mcp.schema.CompleteRequest.CompleteRequestParameters;
 import za.co.sindi.ai.mcp.schema.CompleteResult;
 import za.co.sindi.ai.mcp.schema.CompleteResult.Completion;
+import za.co.sindi.ai.mcp.schema.CreateMessageRequest;
+import za.co.sindi.ai.mcp.schema.CreateMessageResult;
 import za.co.sindi.ai.mcp.schema.EmptyResult;
 import za.co.sindi.ai.mcp.schema.GetPromptRequest;
 import za.co.sindi.ai.mcp.schema.GetPromptRequest.GetPromptRequestParameters;
@@ -51,7 +55,6 @@ import za.co.sindi.ai.mcp.schema.SubscribeRequest.SubscribeRequestParameters;
 import za.co.sindi.ai.mcp.schema.Tool;
 import za.co.sindi.ai.mcp.schema.UnsubscribeRequest;
 import za.co.sindi.ai.mcp.schema.UnsubscribeRequest.UnsubscribeRequestParameters;
-import za.co.sindi.ai.mcp.shared.Client;
 import za.co.sindi.ai.mcp.shared.ClientTransport;
 import za.co.sindi.ai.mcp.shared.RequestHandler;
 import za.co.sindi.commons.utils.Preconditions;
@@ -61,9 +64,15 @@ import za.co.sindi.commons.utils.Strings;
  * @author Buhake Sindi
  * @since 21 February 2025
  */
-public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClient {
+public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
+	
+	private static final Logger LOGGER = Logger.getLogger(DefaultMCPClient.class.getName());
 	
 	private final ConcurrentHashMap<String, Root> roots = new ConcurrentHashMap<>();
+	
+	private final Client client;
+	
+	private Function<CreateMessageRequest, RequestHandler<CreateMessageResult>> samplingHandler;
 
 	/**
 	 * @param transport
@@ -71,18 +80,25 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	 * @param clientInfo
 	 */
 	public DefaultMCPClient(ClientTransport transport, ClientCapabilities clientCapabilities, Implementation clientInfo) {
-		super(transport, clientCapabilities, clientInfo);
-		
-		if (clientCapabilities.getRoots() != null) {
-			addRequestHandler(ListRootsRequest.METHOD_ROOTS_LIST, listRootsRequestHandler());
-			addNotificationHandler(RootsListChangedNotification.METHOD_NOTIFICATION_ROOTS_lIST_CHANGED, notification -> {});
-		}
-		
-		if (clientCapabilities.getSampling() != null) {
-			
-		}
+		this(new DefaultClient(transport, clientCapabilities, clientInfo), null);
 	}
 	
+	/**
+	 * @param client
+	 * @param samplingHandler
+	 */
+	public DefaultMCPClient(Client client, Function<CreateMessageRequest, RequestHandler<CreateMessageResult>> samplingHandler) {
+		super();
+		this.client = client;
+		
+		if (client.getClientCapabilities().getRoots() != null) {
+			client.addRequestHandler(ListRootsRequest.METHOD_ROOTS_LIST, listRootsRequestHandler());
+			client.addNotificationHandler(RootsListChangedNotification.METHOD_NOTIFICATION_ROOTS_lIST_CHANGED, notification -> {});
+		}
+		
+		setSamplingHandler(samplingHandler);
+	}
+
 	private RequestHandler<ListRootsResult> listRootsRequestHandler() {
 		
 		return request -> {
@@ -91,40 +107,62 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return result;
 		};
 	}
+	
+	// --------------------------
+	// Sampling
+	// --------------------------
+	private RequestHandler<CreateMessageResult> createMessageRequestHandler() {
+		
+		return request -> {
+			var handler = samplingHandler.apply((CreateMessageRequest)request);
+			return handler.handle(request);
+		};
+	}
+
+	/**
+	 * @param samplingHandler the samplingHandler to set
+	 */
+	public void setSamplingHandler(Function<CreateMessageRequest, RequestHandler<CreateMessageResult>> samplingHandler) {
+		if (client.getClientCapabilities().getSampling() != null) {
+			if (samplingHandler == null) {
+				throw new IllegalArgumentException("Sampling handler must not be null when client capabilities include sampling");
+			}
+			this.samplingHandler = samplingHandler;
+			client.addRequestHandler(CreateMessageRequest.METHOD_SAMPLING_CREATE_MESSAGE, createMessageRequestHandler());
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see za.co.sindi.ai.mcp.shared.Protocol#connect()
 	 */
-	
-	@Override
 	public void connect() {
 		// TODO Auto-generated method stub
-		super.connect();
+		client.connect();
 		
-		InitializeResult result = initialize();
+		InitializeResult result = initialize(client.getClientCapabilities(), client.getClientInfo());
 		Preconditions.checkState(result != null, "Server sent invalid initialize result.");
 		
 		LOGGER.info("Server protocol version: " + result.getProtocolVersion());
 		
-		serverCapabilities = result.getCapabilities();
-		serverInfo = result.getServerInfo();
-		instructions = result.getInstructions();
+		client.serverCapabilities = result.getCapabilities();
+		client.serverInfo = result.getServerInfo();
+		client.instructions = result.getInstructions();
 		
 		//Notify
-		sendNotification(new InitializedNotification());
+		client.sendNotification(new InitializedNotification());
 	}
 
 	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.client.MCPClient#initialize()
+	 * @see za.co.sindi.ai.mcp.client.MCPClient#initialize(za.co.sindi.ai.mcp.schema.ClientCapabilities, za.co.sindi.ai.mcp.schema.Implementation)
 	 */
 	@Override
-	public InitializeResult initialize() {
+	public InitializeResult initialize(ClientCapabilities clientCapabilities, Implementation clientInfo) {
 		// TODO Auto-generated method stub
 		try {
-			return initializeAsync().get();
+			return initializeAsync(clientCapabilities, clientInfo).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -133,14 +171,13 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	 * @see za.co.sindi.ai.mcp.client.MCPClient#ping()
 	 */
 	@Override
-	public EmptyResult ping() {
+	public void ping() {
 		// TODO Auto-generated method stub
 		try {
-			return pingAsync().get();
+			pingAsync().get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
-			return null;
+			client.onError(e);
 		}
 	}
 
@@ -154,7 +191,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return listResourcesAsync().get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -169,7 +206,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return listResourceTemplatesAsync().get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -184,7 +221,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return readResourceAsync(uri).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -199,7 +236,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			subscribeResourceAsync(uri).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 		}
 	}
 
@@ -213,7 +250,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			unsubscribeResourceAsync(uri).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 		}
 	}
 
@@ -227,7 +264,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return getPromptAsync(name, arguments).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -242,7 +279,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return listToolsAsync().get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -257,7 +294,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return callToolAsync(name, arguments).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -272,7 +309,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			setLoggingLevelAsync(level).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 		}
 	}
 
@@ -286,7 +323,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return completeAsync(reference, argument).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -301,7 +338,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			return listToolsAsync(cursor).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 			return null;
 		}
 	}
@@ -316,7 +353,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			sendRootListChangedAsync().get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 		}
 	}
 	
@@ -330,7 +367,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			addRootAsync(root).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 		}
 	}
 	
@@ -344,17 +381,17 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			removeRootAsync(uri).get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
-			onError(e);
+			client.onError(e);
 		}
 	}
 	
 	//------------------------------- Async -------------------------------
 
 	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.client.MCPAsyncClient#initializeAsync()
+	 * @see za.co.sindi.ai.mcp.client.MCPAsyncClient#initializeAsync(za.co.sindi.ai.mcp.schema.ClientCapabilities, za.co.sindi.ai.mcp.schema.Implementation)
 	 */
 	@Override
-	public CompletableFuture<InitializeResult> initializeAsync() {
+	public CompletableFuture<InitializeResult> initializeAsync(ClientCapabilities clientCapabilities, Implementation clientInfo) {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(() -> {
 			InitializeRequest request = new InitializeRequest();
@@ -364,7 +401,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setProtocolVersion(ProtocolVersion.getLatest());
 			request.setParameters(parameters);
 			
-			return sendRequest(request);
+			return client.sendRequest(request);
 		});
 	}
 
@@ -372,11 +409,12 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	 * @see za.co.sindi.ai.mcp.client.MCPAsyncClient#pingAsync()
 	 */
 	@Override
-	public CompletableFuture<EmptyResult> pingAsync() {
+	public CompletableFuture<Void> pingAsync() {
 		// TODO Auto-generated method stub
-		CompletableFuture<EmptyResult> cf = new CompletableFuture<>();
-		cf.complete(sendRequest(new PingRequest()));
-		return cf;
+		return CompletableFuture.supplyAsync(() -> {
+			EmptyResult result = client.sendRequest(new PingRequest());
+			return result;
+		}).thenAccept(result -> {});
 	}
 
 	/* (non-Javadoc)
@@ -386,7 +424,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	public CompletableFuture<Resource[]> listResourcesAsync() {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(() -> {
-			ListResourcesResult result = sendRequest(new ListResourcesRequest());
+			ListResourcesResult result = client.sendRequest(new ListResourcesRequest());
 			return result.getResources();
 		});
 	}
@@ -398,7 +436,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	public CompletableFuture<ResourceTemplate[]> listResourceTemplatesAsync() {
 		// TODO Auto-generated method stub
 		return CompletableFuture.supplyAsync(() -> {
-			ListResourceTemplatesResult result = sendRequest(new ListResourceTemplatesRequest());
+			ListResourceTemplatesResult result = client.sendRequest(new ListResourceTemplatesRequest());
 			return result.getResourceTemplates();
 		});
 	}
@@ -415,7 +453,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setUri(uri);
 			request.setParameters(parameters);
 			
-			ReadResourceResult result = sendRequest(request);
+			ReadResourceResult result = client.sendRequest(request);
 			return result.getContents();
 			
 		});
@@ -433,7 +471,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setUri(uri);
 			request.setParameters(parameters);
 			
-			sendRequest(request);
+			client.sendRequest(request);
 		});
 	}
 
@@ -449,7 +487,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setUri(uri);
 			request.setParameters(parameters);
 			
-			sendRequest(request);
+			client.sendRequest(request);
 		});
 	}
 
@@ -466,7 +504,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setArguments(arguments);
 			request.setParameters(parameters);
 			
-			return sendRequest(request);
+			return client.sendRequest(request);
 		});
 	}
 
@@ -482,7 +520,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setCursor(cursor);
 			request.setParameters(parameters);
 			
-			ListToolsResult result = sendRequest(request);
+			ListToolsResult result = client.sendRequest(request);
 			return result.getTools();
 		});
 	}
@@ -500,7 +538,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setArguments(arguments);
 			request.setParameters(parameters);
 			
-			return sendRequest(request);
+			return client.sendRequest(request);
 		});
 	}
 
@@ -516,7 +554,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setLevel(level);
 			request.setParameters(parameters);
 			
-			sendRequest(request);
+			client.sendRequest(request);
 		});
 	}
 
@@ -533,7 +571,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 			parameters.setArgument(argument);
 			request.setParameters(parameters);
 			
-			CompleteResult result = sendRequest(request);
+			CompleteResult result = client.sendRequest(request);
 			return result.getCompletion();
 		});
 	}
@@ -545,8 +583,8 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	public CompletableFuture<Void> sendRootListChangedAsync() {
 		// TODO Auto-generated method stub
 		return CompletableFuture.runAsync(() -> {
-			if (Boolean.TRUE.equals(clientCapabilities.getRoots().getListChanged())) {
-				sendNotification(new RootsListChangedNotification());
+			if (Boolean.TRUE.equals(client.getClientCapabilities().getRoots().getListChanged())) {
+				client.sendNotification(new RootsListChangedNotification());
 			}
 		});
 	}
@@ -558,13 +596,13 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	public CompletableFuture<Void> addRootAsync(Root root) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(root != null, "Root must not be null");
-		Preconditions.checkState(clientCapabilities.getRoots() != null, "Client must be configured with roots capabilities");
+		Preconditions.checkState(client.getClientCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
 		Preconditions.checkState(!roots.containsKey(root.getUri()), "Root with uri '" + root.getUri() + "' already exists");
 		
 		return CompletableFuture.runAsync(() -> {
 			roots.put(root.getUri(), root);
 			LOGGER.info("Added root: " + root.getUri() + " (" + root.getName() + ")");
-		}).thenCompose(result -> clientCapabilities.getRoots().getListChanged() ? sendRootListChangedAsync() : CompletableFuture.completedFuture(null));
+		}).thenCompose(result -> client.getClientCapabilities().getRoots().getListChanged() ? sendRootListChangedAsync() : CompletableFuture.completedFuture(null));
 	}
 
 	/* (non-Javadoc)
@@ -574,7 +612,7 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 	public CompletableFuture<Void> removeRootAsync(String uri) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(uri), "Root uri must not be null");
-		Preconditions.checkState(clientCapabilities.getRoots() != null, "Client must be configured with roots capabilities");
+		Preconditions.checkState(client.getClientCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
 		Preconditions.checkState(roots.containsKey(uri), "Root with uri '" + uri + "' does not exist");
 		
 		return CompletableFuture.supplyAsync(() -> {
@@ -583,6 +621,6 @@ public class DefaultMCPClient extends Client implements MCPAsyncClient, MCPClien
 				LOGGER.info("Removed root: " + removed.getUri() + " (" + removed.getName() + ")");
 			}
 			return removed;
-		}).thenCompose(removed -> removed != null && clientCapabilities.getRoots().getListChanged() ? sendRootListChangedAsync() : CompletableFuture.completedFuture(null));
+		}).thenCompose(removed -> removed != null && client.getClientCapabilities().getRoots().getListChanged() ? sendRootListChangedAsync() : CompletableFuture.completedFuture(null));
 	}
 }

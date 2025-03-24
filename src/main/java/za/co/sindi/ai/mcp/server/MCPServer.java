@@ -23,7 +23,7 @@ import za.co.sindi.ai.mcp.shared.RequestHandler;
  */
 public interface MCPServer {
 
-	public EmptyResult ping();
+	public void ping();
 	
 	public CreateMessageResult createMessage(final CreateMessageRequestParameters parameters);
 	

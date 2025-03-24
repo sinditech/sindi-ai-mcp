@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 
 import jakarta.json.bind.JsonbException;
 import za.co.sindi.ai.mcp.mapper.JSONObjectMapper;
@@ -27,9 +26,7 @@ import za.co.sindi.ai.mcp.shared.TransportException;
  */
 public class StdioServerTransport extends AbstractTransport implements ServerTransport {
 	
-	private static final Logger LOGGER = Logger.getLogger(StdioServerTransport.class.getName());
-	
-	private AtomicBoolean initialized = new AtomicBoolean(false);
+	private final AtomicBoolean initialized = new AtomicBoolean(false);
 	
 	private InputStream inputStream = System.in;
 	

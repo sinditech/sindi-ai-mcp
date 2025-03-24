@@ -5,7 +5,6 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
-import za.co.sindi.ai.mcp.client.StdioClientTransport;
 import za.co.sindi.ai.mcp.mapper.ObjectMapper;
 
 /**

@@ -13,11 +13,13 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import za.co.sindi.ai.mcp.client.Client;
 import za.co.sindi.ai.mcp.schema.CancelledNotification;
 import za.co.sindi.ai.mcp.schema.CancelledNotification.CancelledNotificationParameters;
 import za.co.sindi.ai.mcp.schema.ErrorCodes;
 import za.co.sindi.ai.mcp.schema.JSONRPCError;
 import za.co.sindi.ai.mcp.schema.JSONRPCError.Error;
+import za.co.sindi.ai.mcp.server.Server;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.schema.JSONRPCNotification;
 import za.co.sindi.ai.mcp.schema.JSONRPCRequest;
