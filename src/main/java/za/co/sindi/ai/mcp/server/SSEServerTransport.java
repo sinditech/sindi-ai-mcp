@@ -23,8 +23,6 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	/** Event type for endpoint information */
 	private static final String ENDPOINT_EVENT_TYPE = "endpoint";
 	
-	private static final String UTF_8 = "UTF-8";
-
 	private static final String APPLICATION_JSON = "application/json";
 	
 	private static final String TEXT_PLAIN = "text/plain";
@@ -37,25 +35,23 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	
 	private final String sessionId;
 	
-	private final SSEServerSession sseSession;
+	private SSEServerSession sseSession;
 	
 	/**
 	 * @param mapper
 	 * @param messageEndpoint
-	 * @param sseSession
 	 */
-	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint, SSEServerSession sseSession) {
-		this(mapper, messageEndpoint, "sessionId", UUID.randomUUID().toString(), sseSession);
+	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint) {
+		this(mapper, messageEndpoint, "sessionId", UUID.randomUUID().toString());
 	}
 	
 	/**
 	 * @param mapper
 	 * @param messageEndpoint
 	 * @param sessionIdParameterName
-	 * @param sseSession
 	 */
-	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint, String sessionIdParameterName, SSEServerSession sseSession) {
-		this(mapper, messageEndpoint,sessionIdParameterName, UUID.randomUUID().toString(), sseSession);
+	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint, String sessionIdParameterName) {
+		this(mapper, messageEndpoint,sessionIdParameterName, UUID.randomUUID().toString());
 	}
 
 	/**
@@ -63,14 +59,19 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	 * @param messageEndpoint
 	 * @param sessionIdParameterName
 	 * @param sessionId
-	 * @param sseSession
 	 */
 	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint, String sessionIdParameterName,
-			String sessionId, SSEServerSession sseSession) {
+			String sessionId) {
 		super(mapper);
 		this.messageEndpoint = messageEndpoint;
 		this.sessionIdParameterName = sessionIdParameterName;
 		this.sessionId = sessionId;
+	}
+
+	/**
+	 * @param sseSession the sseSession to set
+	 */
+	public void setSseSession(SSEServerSession sseSession) {
 		this.sseSession = sseSession;
 	}
 
@@ -80,6 +81,10 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	@Override
 	public void start() {
 		// TODO Auto-generated method stub
+		if (sseSession == null) {
+			throw new TransportException("SSE session hasn't been initialized! Set the session with the setSseSession() method.");
+		}
+		
 		if (!initialized.compareAndSet(false, true)) {
             throw new TransportException("SSEServerTransport already started! If using Server class, note that connect() calls start() automatically.");
         }
@@ -92,6 +97,7 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 			future.get();
 		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
+			sseSession.close();
 			getMessageHandler().onError(e);
 		}
 	}
@@ -102,6 +108,10 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	@Override
 	public CompletableFuture<Void> sendAsync(JSONRPCMessage message) {
 		// TODO Auto-generated method stub
+		if (sseSession == null) {
+			throw new TransportException("SSE session hasn't been initialized! Set the session with the setSseSession() method.");
+		}
+		
 		if (!initialized.get()) {
 			throw new TransportException("Transport not connected.");
 		}
@@ -119,7 +129,10 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	public void close() throws Exception {
 		// TODO Auto-generated method stub
 		initialized.compareAndSet(true, false);
-		sseSession.close();
+		if (sseSession != null) {
+			sseSession.close();
+			sseSession = null;
+		}
 		super.close();
 	}
 	
