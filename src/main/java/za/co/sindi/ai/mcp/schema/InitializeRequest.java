@@ -13,14 +13,6 @@ public final class InitializeRequest extends BaseRequest implements ParameterBas
 	
 	public static final String METHOD_INITIALIZE = "initialize";
 	
-	/**
-	 * 
-	 */
-	public InitializeRequest() {
-		super(METHOD_INITIALIZE);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private InitializeRequestParameters parameters;
 

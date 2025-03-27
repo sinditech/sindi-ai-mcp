@@ -8,11 +8,4 @@ public final class PingRequest extends BaseRequest implements ClientRequest, Ser
 	
 	public static final String METHOD_PING = "ping";
 
-	/**
-	 * 
-	 */
-	public PingRequest() {
-		super(METHOD_PING);
-		//TODO Auto-generated constructor stub
-	}
 }

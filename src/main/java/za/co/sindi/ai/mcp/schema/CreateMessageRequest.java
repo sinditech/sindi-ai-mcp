@@ -13,14 +13,6 @@ public final class CreateMessageRequest extends BaseRequest implements Parameter
 	
 	public static final String METHOD_SAMPLING_CREATE_MESSAGE = "sampling/createMessage";
 	
-	/**
-	 * 
-	 */
-	public CreateMessageRequest() {
-		super(METHOD_SAMPLING_CREATE_MESSAGE);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private CreateMessageRequestParameters parameters;
 

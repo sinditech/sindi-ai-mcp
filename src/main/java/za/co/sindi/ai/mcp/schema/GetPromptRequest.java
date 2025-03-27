@@ -13,14 +13,6 @@ import za.co.sindi.ai.mcp.schema.GetPromptRequest.GetPromptRequestParameters;
 public final class GetPromptRequest extends BaseRequest implements ParameterBasedRequest<GetPromptRequestParameters>, ClientRequest {
 	
 	public static final String METHOD_PROMPTS_GET = "prompts/get";
-	
-	/**
-	 * 
-	 */
-	public GetPromptRequest() {
-		super(METHOD_PROMPTS_GET);
-		//TODO Auto-generated constructor stub
-	}
 
 	@JsonbProperty("params")
 	private GetPromptRequestParameters parameters;

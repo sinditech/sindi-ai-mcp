@@ -8,7 +8,5 @@ import java.io.Serializable;
  */
 public interface Request extends Serializable {
 	
-	default String getMethod() {
-		return "";
-	};
+//	public String getMethod();
 }

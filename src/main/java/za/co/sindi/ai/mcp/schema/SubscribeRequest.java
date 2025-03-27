@@ -13,14 +13,6 @@ public final class SubscribeRequest extends BaseRequest implements ParameterBase
 	
 	public static final String METHOD_SUBSCRIBE = "resources/subscribe";
 	
-	/**
-	 * 
-	 */
-	public SubscribeRequest() {
-		super(METHOD_SUBSCRIBE);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private SubscribeRequestParameters parameters;
 

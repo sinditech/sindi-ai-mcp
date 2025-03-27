@@ -36,6 +36,7 @@ import za.co.sindi.ai.mcp.schema.ListRootsResult;
 import za.co.sindi.ai.mcp.schema.ListToolsRequest;
 import za.co.sindi.ai.mcp.schema.ListToolsResult;
 import za.co.sindi.ai.mcp.schema.LoggingLevel;
+import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.schema.PaginatedRequest.PaginatedRequestParameters;
 import za.co.sindi.ai.mcp.schema.PingRequest;
 import za.co.sindi.ai.mcp.schema.ProtocolVersion;
@@ -114,7 +115,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	private RequestHandler<CreateMessageResult> createMessageRequestHandler() {
 		
 		return request -> {
-			var handler = samplingHandler.apply((CreateMessageRequest)request);
+			RequestHandler<CreateMessageResult> handler = samplingHandler.apply(MCPSchema.toRequest(request));
 			return handler.handle(request);
 		};
 	}

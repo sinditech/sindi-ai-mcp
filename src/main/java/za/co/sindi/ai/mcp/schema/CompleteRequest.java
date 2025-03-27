@@ -13,14 +13,6 @@ public final class CompleteRequest extends BaseRequest implements ParameterBased
 	
 	public static final String METHOD_COMPLETION_COMPLETE = "completion/complete";
 	
-	/**
-	 * 
-	 */
-	public CompleteRequest() {
-		super(METHOD_COMPLETION_COMPLETE);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private CompleteRequestParameters parameters;
 

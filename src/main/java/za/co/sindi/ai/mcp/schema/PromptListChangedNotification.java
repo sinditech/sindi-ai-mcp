@@ -8,11 +8,4 @@ public final class PromptListChangedNotification extends BaseNotification implem
 	
 	public static final String METHOD_NOTIFICATION_PROMPTS_lIST_CHANGED = "notifications/prompts/list_changed";
 
-	/**
-	 * 
-	 */
-	public PromptListChangedNotification() {
-		super(METHOD_NOTIFICATION_PROMPTS_lIST_CHANGED);
-		//TODO Auto-generated constructor stub
-	}	
 }

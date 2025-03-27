@@ -7,6 +7,7 @@ import za.co.sindi.ai.mcp.schema.Implementation;
 import za.co.sindi.ai.mcp.schema.InitializeRequest;
 import za.co.sindi.ai.mcp.schema.InitializeResult;
 import za.co.sindi.ai.mcp.schema.InitializedNotification;
+import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.schema.ProtocolVersion;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.schema.ServerNotification;
@@ -59,7 +60,7 @@ public abstract class Server extends Protocol<ServerTransport, ServerRequest, Se
 		this.instructions = instructions;
 		
 		addRequestHandler(InitializeRequest.METHOD_INITIALIZE, request -> {
-			var initializeRequest = (InitializeRequest) request;
+			InitializeRequest initializeRequest = MCPSchema.toRequest(request);
 			clientCapabilities = initializeRequest.getParameters().getCapabilities();
 			clientInfo = initializeRequest.getParameters().getClientInfo();
 			

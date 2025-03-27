@@ -8,11 +8,4 @@ public final class ListPromptsRequest extends PaginatedRequest implements Client
 
 	public static final String METHOD_LIST_PROMPTS = "prompts/list";
 
-	/**
-	 * 
-	 */
-	public ListPromptsRequest() {
-		super(METHOD_LIST_PROMPTS);
-		//TODO Auto-generated constructor stub
-	}
 }

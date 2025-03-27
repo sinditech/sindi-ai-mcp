@@ -17,14 +17,6 @@ public final class ProgressNotification extends BaseNotification implements Para
 	private ProgressNotificationParameters parameters;
 	
 	/**
-	 * 
-	 */
-	public ProgressNotification() {
-		super(METHOD_NOTIFICATION_PROGRESS);
-		//TODO Auto-generated constructor stub
-	}
-	
-	/**
 	 * @return the parameters
 	 */
 	public ProgressNotificationParameters getParameters() {

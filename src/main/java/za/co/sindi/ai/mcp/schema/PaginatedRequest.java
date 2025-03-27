@@ -11,14 +11,6 @@ import za.co.sindi.ai.mcp.schema.PaginatedRequest.PaginatedRequestParameters;
  */
 public abstract class PaginatedRequest extends BaseRequest implements ParameterBasedRequest<PaginatedRequestParameters> {
 	
-	/**
-	 * @param method
-	 */
-	protected PaginatedRequest(String method) {
-		super(method);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private PaginatedRequestParameters parameters;
 

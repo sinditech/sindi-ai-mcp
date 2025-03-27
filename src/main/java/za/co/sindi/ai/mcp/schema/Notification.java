@@ -6,7 +6,5 @@ package za.co.sindi.ai.mcp.schema;
  */
 public interface Notification {
 
-	default String getMethod() {
-		return "";
-	};
+//	public String getMethod();
 }

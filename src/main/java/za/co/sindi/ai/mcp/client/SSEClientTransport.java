@@ -10,11 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
-import jakarta.json.bind.JsonbException;
-import za.co.sindi.ai.mcp.mapper.ObjectMapper;
-import za.co.sindi.ai.mcp.schema.JSONRPCError;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
-import za.co.sindi.ai.mcp.schema.JSONRPCResult;
+import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.shared.AbstractTransport;
 import za.co.sindi.ai.mcp.shared.ClientTransport;
 import za.co.sindi.ai.mcp.shared.TransportException;
@@ -57,17 +54,16 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 	 * @param baseUrl
 	 * @param mapper
 	 */
-	public SSEClientTransport(String baseUrl, ObjectMapper mapper) {
-		this(baseUrl, baseUrl + SSE_ENDPOINT, mapper);
+	public SSEClientTransport(String baseUrl) {
+		this(baseUrl, baseUrl + SSE_ENDPOINT);
 	}
 
 	/**
 	 * @param baseUrl
 	 * @param sseUrl
-	 * @param mapper
 	 */
-	public SSEClientTransport(final String baseUrl, final String sseUrl, ObjectMapper mapper) {
-		super(mapper);
+	public SSEClientTransport(final String baseUrl, final String sseUrl) {
+		super();
 		this.baseUrl = baseUrl;
 		this.sseUrl = sseUrl;
 	}
@@ -104,16 +100,8 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 					if (ENDPOINT_EVENT_TYPE.equals(type)) {
 						messageEndpoint.set(messageEvent.getData());
 					} else if (MESSAGE_EVENT_TYPE.equals(type)) {
-						JSONRPCMessage responseMessage = null;
-						try {
-							responseMessage = getMapper().map(messageEvent.getData(), JSONRPCResult.class);
-						} catch (JsonbException e) {
-							responseMessage = getMapper().map(messageEvent.getData(), JSONRPCError.class);
-						}
-						
-						if (responseMessage != null) {
-							getMessageHandler().onMessage(responseMessage);
-						}
+						JSONRPCMessage responseMessage = MCPSchema.deserializeJSONRPCMessage(messageEvent.getData());
+						getMessageHandler().onMessage(responseMessage);
 					} else if (ERROR_EVENT_TYPE.equals(type)) {
 						RuntimeException error = new IllegalStateException("SSE error: " + messageEvent.getData());
 						getMessageHandler().onError(error);
@@ -158,7 +146,7 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 			throw new TransportException("No message endpoint available.");
 		}
 		
-		String jsonText = getMapper().map(message);
+		String jsonText = MCPSchema.serializeJSONRPCMessage(message);   //getMapper().map(message);
 		HttpRequest request = HttpRequest.newBuilder()
 				.uri(URI.create(this.baseUrl + endpoint))
 				.header("Content-Type", "application/json")

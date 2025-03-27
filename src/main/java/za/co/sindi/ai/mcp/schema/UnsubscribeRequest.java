@@ -13,14 +13,6 @@ public final class UnsubscribeRequest extends BaseRequest implements ParameterBa
 	
 	public static final String METHOD_UNSUBSCRIBE = "resources/unsubscribe";
 	
-	/**
-	 * 
-	 */
-	public UnsubscribeRequest() {
-		super(METHOD_UNSUBSCRIBE);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private UnsubscribeRequestParameters parameters;
 

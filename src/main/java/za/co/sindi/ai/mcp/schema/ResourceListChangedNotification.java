@@ -8,11 +8,4 @@ public final class ResourceListChangedNotification extends BaseNotification impl
 	
 	public static final String METHOD_NOTIFICATION_RESOURCES_lIST_CHANGED = "notifications/resources/list_changed";
 
-	/**
-	 * 
-	 */
-	public ResourceListChangedNotification() {
-		super(METHOD_NOTIFICATION_RESOURCES_lIST_CHANGED);
-		//TODO Auto-generated constructor stub
-	}
 }

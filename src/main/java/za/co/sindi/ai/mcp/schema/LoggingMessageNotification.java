@@ -17,14 +17,6 @@ public final class LoggingMessageNotification extends BaseNotification implement
 	private LoggingMessageNotificationParameters parameters;
 	
 	/**
-	 * 
-	 */
-	public LoggingMessageNotification() {
-		super(METHOD_NOTIFICATION_LOGGING_MESSAGE);
-		//TODO Auto-generated constructor stub
-	}
-
-	/**
 	 * @return the parameters
 	 */
 	public LoggingMessageNotificationParameters getParameters() {

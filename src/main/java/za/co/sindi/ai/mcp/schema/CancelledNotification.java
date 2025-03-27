@@ -17,14 +17,6 @@ public final class CancelledNotification extends BaseNotification implements Par
 	private CancelledNotificationParameters parameters;
 
 	/**
-	 * 
-	 */
-	public CancelledNotification() {
-		super(METHOD_NOTIFICATION_CANCELLED);
-		//TODO Auto-generated constructor stub
-	}
-	
-	/**
 	 * @return the parameters
 	 */
 	public CancelledNotificationParameters getParameters() {

@@ -13,14 +13,6 @@ public final class ResourceUpdatedNotification extends BaseNotification implemen
 	
 	public static final String METHOD_RESOURCES_UPDATED = "notifications/resources/updated";
 	
-	/**
-	 * 
-	 */
-	public ResourceUpdatedNotification() {
-		super(METHOD_RESOURCES_UPDATED);
-		//TODO Auto-generated constructor stub
-	}
-	
 	@JsonbProperty("params")
 	private ResourceUpdatedNotificationParameters parameters;
 

@@ -5,8 +5,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import za.co.sindi.ai.mcp.mapper.ObjectMapper;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
+import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.shared.AbstractTransport;
 import za.co.sindi.ai.mcp.shared.ServerTransport;
 import za.co.sindi.ai.mcp.shared.TransportException;
@@ -38,40 +38,34 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	private SSEServerSession sseSession;
 	
 	/**
-	 * @param mapper
 	 * @param messageEndpoint
+	 * @param sseSession
 	 */
-	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint) {
-		this(mapper, messageEndpoint, "sessionId", UUID.randomUUID().toString());
+	public SSEServerTransport(String messageEndpoint, SSEServerSession sseSession) {
+		this(messageEndpoint, "sessionId", UUID.randomUUID().toString(), sseSession);
 	}
 	
 	/**
-	 * @param mapper
 	 * @param messageEndpoint
 	 * @param sessionIdParameterName
+	 * @param sseSession
 	 */
-	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint, String sessionIdParameterName) {
-		this(mapper, messageEndpoint,sessionIdParameterName, UUID.randomUUID().toString());
+	public SSEServerTransport(String messageEndpoint, String sessionIdParameterName, SSEServerSession sseSession) {
+		this(messageEndpoint,sessionIdParameterName, UUID.randomUUID().toString(), sseSession);
 	}
 
 	/**
-	 * @param mapper
 	 * @param messageEndpoint
 	 * @param sessionIdParameterName
 	 * @param sessionId
+	 * @param sseSession
 	 */
-	public SSEServerTransport(ObjectMapper mapper, String messageEndpoint, String sessionIdParameterName,
-			String sessionId) {
-		super(mapper);
+	public SSEServerTransport(String messageEndpoint, String sessionIdParameterName,
+			String sessionId, SSEServerSession sseSession) {
+		super();
 		this.messageEndpoint = messageEndpoint;
 		this.sessionIdParameterName = sessionIdParameterName;
 		this.sessionId = sessionId;
-	}
-
-	/**
-	 * @param sseSession the sseSession to set
-	 */
-	public void setSseSession(SSEServerSession sseSession) {
 		this.sseSession = sseSession;
 	}
 
@@ -117,7 +111,7 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 		}
 		
 		Runnable runner = () -> {
-			sseSession.broadcast(APPLICATION_JSON, MESSAGE_EVENT_TYPE, getMapper().map(message));
+			sseSession.broadcast(APPLICATION_JSON, MESSAGE_EVENT_TYPE, MCPSchema.serializeJSONRPCMessage(message)); // getMapper().map(message)
 		};
 		return getExecutor() != null ?  CompletableFuture.runAsync(runner, getExecutor()) : CompletableFuture.runAsync(runner);
 	}
@@ -138,12 +132,12 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	
 	public CompletableFuture<Void> handleMessage(final String message) {
 		
-		return handleMessage(getMapper().map(message));
+		return handleMessage(MCPSchema.deserializeJSONRPCMessage(message));
 	}
 	
 	public CompletableFuture<Void> handleMessage(final JSONRPCMessage message) {
 		
-		return CompletableFuture.runAsync(()-> getMessageHandler().onMessage(message));
+		return CompletableFuture.runAsync(() -> getMessageHandler().onMessage(message));
 	}
 
 	/**

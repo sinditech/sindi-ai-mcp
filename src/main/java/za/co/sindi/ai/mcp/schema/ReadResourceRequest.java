@@ -13,14 +13,6 @@ public final class ReadResourceRequest extends BaseRequest implements ParameterB
 	
 	public static final String METHOD_READ_RESOURCE = "resources/read";
 	
-	/**
-	 * 
-	 */
-	public ReadResourceRequest() {
-		super(METHOD_READ_RESOURCE);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private ReadResourceRequestParameters parameters;
 

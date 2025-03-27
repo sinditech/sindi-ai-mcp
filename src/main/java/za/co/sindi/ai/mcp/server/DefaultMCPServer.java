@@ -112,8 +112,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	private RequestHandler<EmptyResult> setLoggingLevelRequestHandler() {
 		
 		return request -> {
-			SetLevelRequest setLevelRequest = (SetLevelRequest)request;
-			loggingLevel = setLevelRequest.getParameters().getLevel();
+			loggingLevel= LoggingLevel.of(String.valueOf(request.getParams().get("level")));
 			return Schema.EMPTY_RESULT;
 		};
 	}
@@ -131,14 +130,13 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	private RequestHandler<GetPromptResult> getPromptRequestHandler() {
 		
 		return request -> {
-			var promptRequest = (GetPromptRequest) request;
-			String promptName = promptRequest.getParameters().getName();
+			String promptName = String.valueOf(request.getParams().get("name"));
 			RegisteredPrompt registeredPrompt = prompts.get(promptName);
 			if (registeredPrompt == null) {
 				throw new MCPError(ErrorCodes.INVALID_PARAMS ,"Prompt not found: " + promptName);
 			}
 			
-			return registeredPrompt.getMessageProvider().handle(promptRequest);
+			return registeredPrompt.getMessageProvider().handle(request);
 		};
 	}
 	
@@ -155,14 +153,13 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	private RequestHandler<ReadResourceResult> readResourcesRequestHandler() {
 		
 		return request -> {
-			var readResourceRequest = (ReadResourceRequest) request;
-			String resourceUri = readResourceRequest.getParameters().getUri();
+			String resourceUri = String.valueOf(request.getParams().get("uri"));
 			RegisteredResource registeredResource = resources.get(resourceUri);
 			if (registeredResource == null) {
 				throw new MCPError(ErrorCodes.INVALID_PARAMS ,"Resource with uri '" + resourceUri + "' not found.");
 			}
 			
-			return registeredResource.getReadHandler().handle(readResourceRequest);
+			return registeredResource.getReadHandler().handle(request);
 		};
 	}
 	
@@ -188,14 +185,13 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	
 	private RequestHandler<CallToolResult> callToolsRequestHandler() {
 		return request -> {
-			var callToolRequest = (CallToolRequest) request;
-			String toolName = callToolRequest.getParameters().getName();
+			String toolName = String.valueOf(request.getParams().get("name"));
 			RegisteredTool registeredTool = tools.get(toolName);
 			if (registeredTool == null) {
 				throw new MCPError(ErrorCodes.INVALID_PARAMS ,"Tool not found: " + toolName);
 			}
 			
-			return registeredTool.getHandler().handle(callToolRequest);
+			return registeredTool.getHandler().handle(request);
 		};
 	}
 

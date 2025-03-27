@@ -12,14 +12,6 @@ import za.co.sindi.ai.mcp.schema.SetLevelRequest.SetLevelRequestParameters;
 public final class SetLevelRequest extends BaseRequest implements ParameterBasedRequest<SetLevelRequestParameters>, ClientRequest {
 	
 	public static final String METHOD_LOGGING_SETLEVEL = "logging/setLevel";
-	
-	/**
-	 * 
-	 */
-	public SetLevelRequest() {
-		super(METHOD_LOGGING_SETLEVEL);
-		//TODO Auto-generated constructor stub
-	}
 
 	@JsonbProperty("params")
 	private SetLevelRequestParameters parameters;

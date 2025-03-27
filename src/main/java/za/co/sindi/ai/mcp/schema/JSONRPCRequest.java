@@ -1,18 +1,23 @@
 package za.co.sindi.ai.mcp.schema;
 
+import java.util.Map;
+
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public class JSONRPCRequest extends JSONRPCMessage implements Request {
+public final class JSONRPCRequest extends JSONRPCMessage implements Request {
 
 	@JsonbProperty
 	private long id;
 	
 	@JsonbProperty
-	private Object params;
+	private String method;
+	
+	@JsonbProperty
+	private Map<String, Object> params;
 
 	/**
 	 * @return the id
@@ -29,16 +34,30 @@ public class JSONRPCRequest extends JSONRPCMessage implements Request {
 	}
 
 	/**
+	 * @return the method
+	 */
+	public String getMethod() {
+		return method;
+	}
+
+	/**
+	 * @param method the method to set
+	 */
+	public void setMethod(String method) {
+		this.method = method;
+	}
+
+	/**
 	 * @return the params
 	 */
-	public Object getParams() {
+	public Map<String, Object> getParams() {
 		return params;
 	}
 
 	/**
 	 * @param params the params to set
 	 */
-	public void setParams(Object params) {
+	public void setParams(Map<String, Object> params) {
 		this.params = params;
 	}
 }

@@ -2,6 +2,7 @@ package za.co.sindi.ai.mcp.mapper;
 
 import java.io.InputStream;
 
+import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
 
@@ -10,13 +11,25 @@ import jakarta.json.bind.JsonbConfig;
  * @since 16 February 2025
  */
 public class JSONObjectMapper implements ObjectMapper {
+	private static JsonbConfig config;
+	private final Jsonb jsonb;
 	
-	private JsonbConfig newJsonbConfig() {
-		JsonbConfig config = new JsonbConfig();
-		config.withAdapters(new JsonJSONRPCVersionAdapter(),
-							new JsonLoggingLevelAdapter(),
-							new JsonRoleAdapter(),
-							new JsonProtocolVersionAdapter());
+	/**
+	 * 
+	 */
+	private JSONObjectMapper() {
+		super();
+		this.jsonb = JsonbBuilder.create(config);
+	}
+
+	private static JsonbConfig newJsonbConfig() {
+		if (config == null) {
+			config = new JsonbConfig();
+			config.withAdapters(new JsonJSONRPCVersionAdapter(),
+								new JsonLoggingLevelAdapter(),
+								new JsonRoleAdapter(),
+								new JsonProtocolVersionAdapter());
+		}
 		return config;
 	}
 
@@ -26,7 +39,7 @@ public class JSONObjectMapper implements ObjectMapper {
 	@Override
 	public <E> String map(E object) {
 		// TODO Auto-generated method stub
-		return JsonbBuilder.create(newJsonbConfig()).toJson(object);
+		return jsonb.toJson(object);
 	}
 
 	/* (non-Javadoc)
@@ -35,7 +48,7 @@ public class JSONObjectMapper implements ObjectMapper {
 	@Override
 	public <E> E map(String data, Class<E> type) {
 		// TODO Auto-generated method stub
-		return JsonbBuilder.create(newJsonbConfig()).fromJson(data, type);
+		return jsonb.fromJson(data, type);
 	}
 
 	/* (non-Javadoc)
@@ -44,6 +57,15 @@ public class JSONObjectMapper implements ObjectMapper {
 	@Override
 	public <E> E map(InputStream stream, Class<E> type) {
 		// TODO Auto-generated method stub
-		return JsonbBuilder.create(newJsonbConfig()).fromJson(stream, type);
+		return jsonb.fromJson(stream, type);
+	}
+	
+	public static JSONObjectMapper newInstance() {
+		return fromConfig(newJsonbConfig());
+	}
+	
+	public static JSONObjectMapper fromConfig(final JsonbConfig config) {
+		JSONObjectMapper.config = config;
+		return new JSONObjectMapper();
 	}
 }

@@ -11,12 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 
-import jakarta.json.bind.JsonbException;
-import za.co.sindi.ai.mcp.mapper.JSONObjectMapper;
-import za.co.sindi.ai.mcp.mapper.ObjectMapper;
-import za.co.sindi.ai.mcp.schema.JSONRPCError;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
-import za.co.sindi.ai.mcp.schema.JSONRPCResult;
+import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.shared.AbstractTransport;
 import za.co.sindi.ai.mcp.shared.ClientTransport;
 import za.co.sindi.ai.mcp.shared.TransportException;
@@ -37,15 +33,7 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 	 * @param serverParameters
 	 */
 	public StdioClientTransport(final ServerParameters serverParameters) {
-		this(serverParameters, new JSONObjectMapper());
-	}
-
-	/**
-	 * @param serverParameters
-	 * @param objectMapper
-	 */
-	public StdioClientTransport(final ServerParameters serverParameters, final ObjectMapper objectMapper) {
-		super(objectMapper);
+		super();
 		this.serverParameters = Objects.requireNonNull(serverParameters, "A server parameters is required.");
 	}
 
@@ -112,7 +100,7 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 		
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				String content = getMapper().map(message) + "\n";
+				String content = MCPSchema.serializeJSONRPCMessage(message) + "\n"; // getMapper().map(message)
 				process.getOutputStream().write(content.getBytes(StandardCharsets.UTF_8));
 				process.getOutputStream().flush();
 			} catch (IOException e) {
@@ -129,16 +117,7 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 						if (!line.endsWith("\n")) 
 		                	throw new TransportException("Message does not end with a newline.");
 						
-						JSONRPCMessage responseMessage = null;
-						try {
-							responseMessage = getMapper().map(line, JSONRPCResult.class);
-						} catch (JsonbException e) {
-							responseMessage = getMapper().map(line, JSONRPCError.class);
-						}
-						
-						if (responseMessage != null) {
-							getMessageHandler().onMessage(responseMessage);
-						}
+						getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(line));
 					});
 		CompletableFuture<Void> errorMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.errorReader())) : CompletableFuture.supplyAsync(readContent(process.errorReader()), getExecutor()))
 					.thenAccept(line -> {

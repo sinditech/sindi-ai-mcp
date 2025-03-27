@@ -8,11 +8,4 @@ public final class ToolListChangedNotification extends BaseNotification implemen
 	
 	public static final String METHOD_NOTIFICATION_TOOLS_lIST_CHANGED = "notifications/tools/list_changed";
 
-	/**
-	 * 
-	 */
-	public ToolListChangedNotification() {
-		super(METHOD_NOTIFICATION_TOOLS_lIST_CHANGED);
-		//TODO Auto-generated constructor stub
-	}
 }

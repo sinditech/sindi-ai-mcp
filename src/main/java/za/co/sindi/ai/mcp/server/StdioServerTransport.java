@@ -10,12 +10,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import jakarta.json.bind.JsonbException;
-import za.co.sindi.ai.mcp.mapper.JSONObjectMapper;
-import za.co.sindi.ai.mcp.mapper.ObjectMapper;
-import za.co.sindi.ai.mcp.schema.JSONRPCError;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
-import za.co.sindi.ai.mcp.schema.JSONRPCResult;
+import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.shared.AbstractTransport;
 import za.co.sindi.ai.mcp.shared.ServerTransport;
 import za.co.sindi.ai.mcp.shared.TransportException;
@@ -36,14 +32,7 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 	 * 
 	 */
 	public StdioServerTransport() {
-		this(new JSONObjectMapper());
-	}
-
-	/**
-	 * @param objectMapper
-	 */
-	public StdioServerTransport(final ObjectMapper objectMapper) {
-		super(objectMapper);
+		super();
 	}
 
 	/* (non-Javadoc)
@@ -84,7 +73,7 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 		
 		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
 			try {
-				String content = getMapper().map(message) + "\n";
+				String content = MCPSchema.serializeJSONRPCMessage(message) + "\n"; // getMapper().map(message)
 				outputStream.write(content.getBytes(StandardCharsets.UTF_8));
 				outputStream.flush();
 			} catch (IOException e) {
@@ -98,16 +87,7 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 						if (!line.endsWith("\n")) 
 		                	throw new TransportException("Message does not end with a newline.");
 						
-						JSONRPCMessage responseMessage = null;
-						try {
-							responseMessage = getMapper().map(line, JSONRPCResult.class);
-						} catch (JsonbException e) {
-							responseMessage = getMapper().map(line, JSONRPCError.class);
-						}
-						
-						if (responseMessage != null) {
-							getMessageHandler().onMessage(responseMessage);
-						}
+						getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(line));
 					});
 		
 		return future.thenCompose(c -> resultMessageFuture);

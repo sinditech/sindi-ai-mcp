@@ -14,14 +14,6 @@ public final class CallToolRequest extends BaseRequest implements ParameterBased
 	
 	public static final String METHOD_TOOLS_CALL = "tools/call";
 	
-	/**
-	 * 
-	 */
-	public CallToolRequest() {
-		super(METHOD_TOOLS_CALL);
-		//TODO Auto-generated constructor stub
-	}
-
 	@JsonbProperty("params")
 	private CallToolRequestParameters parameters;
 

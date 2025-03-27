@@ -1,6 +1,6 @@
 package za.co.sindi.ai.mcp.shared;
 
-import za.co.sindi.ai.mcp.schema.Notification;
+import za.co.sindi.ai.mcp.schema.JSONRPCNotification;
 
 /**
  * @author Buhake Sindi
@@ -9,5 +9,5 @@ import za.co.sindi.ai.mcp.schema.Notification;
 @FunctionalInterface
 public interface NotificationHandler {
 
-	public void handle(Notification notification);
+	public void handle(JSONRPCNotification notification);
 }

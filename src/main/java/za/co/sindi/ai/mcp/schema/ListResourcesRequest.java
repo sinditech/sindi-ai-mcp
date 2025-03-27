@@ -7,12 +7,4 @@ package za.co.sindi.ai.mcp.schema;
 public final class ListResourcesRequest extends PaginatedRequest implements ClientRequest {
 
 	public static final String METHOD_LIST_RESOURCES = "resources/list";
-
-	/**
-	 * 
-	 */
-	public ListResourcesRequest() {
-		super(METHOD_LIST_RESOURCES);
-		//TODO Auto-generated constructor stub
-	}
 }

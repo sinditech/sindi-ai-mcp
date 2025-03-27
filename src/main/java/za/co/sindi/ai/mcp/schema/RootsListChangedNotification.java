@@ -8,11 +8,4 @@ public final class RootsListChangedNotification extends BaseNotification impleme
 	
 	public static final String METHOD_NOTIFICATION_ROOTS_lIST_CHANGED = "notifications/roots/list_changed";
 
-	/**
-	 * 
-	 */
-	public RootsListChangedNotification() {
-		super(METHOD_NOTIFICATION_ROOTS_lIST_CHANGED);
-		//TODO Auto-generated constructor stub
-	}
 }

@@ -8,11 +8,4 @@ public final class InitializedNotification extends BaseNotification implements C
 	
 	public static final String METHOD_NOTIFICATION_INITIALIZED = "notifications/initialized";
 
-	/**
-	 * 
-	 */
-	public InitializedNotification() {
-		super(METHOD_NOTIFICATION_INITIALIZED);
-		//TODO Auto-generated constructor stub
-	}
 }

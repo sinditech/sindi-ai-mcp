@@ -1,11 +1,8 @@
 package za.co.sindi.ai.mcp.shared;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.logging.Logger;
-
-import za.co.sindi.ai.mcp.mapper.ObjectMapper;
 
 /**
  * @author Buhake Sindi
@@ -19,18 +16,8 @@ public abstract class AbstractTransport implements Transport {
 	
 	private Executor executor;
 	
-	private ObjectMapper mapper;
-	
 	private JSONRPCMessageHandler messageHandler;;
 	
-	/**
-	 * @param mapper
-	 */
-	protected AbstractTransport(ObjectMapper mapper) {
-		super();
-		this.mapper = Objects.requireNonNull(mapper, "An object mapper is required.");
-	}
-
 	/* (non-Javadoc)
 	 * @see za.co.sindi.ai.mcp.shared.Transport#setRequestTimeout(java.time.Duration)
 	 */
@@ -74,13 +61,6 @@ public abstract class AbstractTransport implements Transport {
 	 */
 	protected Executor getExecutor() {
 		return executor;
-	}
-
-	/**
-	 * @return the mapper
-	 */
-	protected ObjectMapper getMapper() {
-		return mapper;
 	}
 
 	/**
