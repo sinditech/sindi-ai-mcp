@@ -138,19 +138,20 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	 */
 	public void connect() {
 		// TODO Auto-generated method stub
-		client.connect();
-		
-		InitializeResult result = initialize(client.getClientCapabilities(), client.getClientInfo());
-		Preconditions.checkState(result != null, "Server sent invalid initialize result.");
-		
-		LOGGER.info("Server protocol version: " + result.getProtocolVersion());
-		
-		client.serverCapabilities = result.getCapabilities();
-		client.serverInfo = result.getServerInfo();
-		client.instructions = result.getInstructions();
-		
-		//Notify
-		client.sendNotification(new InitializedNotification());
+		client.connectAsync()
+		  .thenCompose(result -> initializeAsync(client.getClientCapabilities(), client.getClientInfo()))
+		  .thenCompose(result -> {
+				Preconditions.checkState(result != null, "Server sent invalid initialize result.");
+				
+				LOGGER.info("Server protocol version: " + result.getProtocolVersion());
+				
+				client.serverCapabilities = result.getCapabilities();
+				client.serverInfo = result.getServerInfo();
+				client.instructions = result.getInstructions();
+				
+				//Notify
+				return client.sendNotification(new InitializedNotification());
+			}).join();
 	}
 
 	/* (non-Javadoc)
@@ -394,16 +395,14 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<InitializeResult> initializeAsync(ClientCapabilities clientCapabilities, Implementation clientInfo) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			InitializeRequest request = new InitializeRequest();
-			InitializeRequestParameters parameters = new InitializeRequestParameters();
-			parameters.setCapabilities(clientCapabilities);
-			parameters.setClientInfo(clientInfo);
-			parameters.setProtocolVersion(ProtocolVersion.getLatest());
-			request.setParameters(parameters);
-			
-			return client.sendRequest(request);
-		});
+		InitializeRequest request = new InitializeRequest();
+		InitializeRequestParameters parameters = new InitializeRequestParameters();
+		parameters.setCapabilities(clientCapabilities);
+		parameters.setClientInfo(clientInfo);
+		parameters.setProtocolVersion(ProtocolVersion.getLatest());
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, InitializeResult.class);
 	}
 
 	/* (non-Javadoc)
@@ -412,10 +411,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Void> pingAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			EmptyResult result = client.sendRequest(new PingRequest());
-			return result;
-		}).thenAccept(result -> {});
+		return client.sendRequest(new PingRequest(), EmptyResult.class).thenAccept(result -> {});
 	}
 
 	/* (non-Javadoc)
@@ -424,10 +420,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Resource[]> listResourcesAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			ListResourcesResult result = client.sendRequest(new ListResourcesRequest());
-			return result.getResources();
-		});
+		return client.sendRequest(new ListResourcesRequest(), ListResourcesResult.class).thenApply(result -> result.getResources());
 	}
 
 	/* (non-Javadoc)
@@ -436,10 +429,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<ResourceTemplate[]> listResourceTemplatesAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			ListResourceTemplatesResult result = client.sendRequest(new ListResourceTemplatesRequest());
-			return result.getResourceTemplates();
-		});
+		return client.sendRequest(new ListResourceTemplatesRequest(), ListResourceTemplatesResult.class).thenApply(result -> result.getResourceTemplates());
 	}
 
 	/* (non-Javadoc)
@@ -448,16 +438,12 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<ResourceContents[]> readResourceAsync(String uri) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			ReadResourceRequest request = new ReadResourceRequest();
-			ReadResourceRequestParameters parameters = new ReadResourceRequestParameters();
-			parameters.setUri(uri);
-			request.setParameters(parameters);
-			
-			ReadResourceResult result = client.sendRequest(request);
-			return result.getContents();
-			
-		});
+		ReadResourceRequest request = new ReadResourceRequest();
+		ReadResourceRequestParameters parameters = new ReadResourceRequestParameters();
+		parameters.setUri(uri);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, ReadResourceResult.class).thenApply(result -> result.getContents());
 	}
 
 	/* (non-Javadoc)
@@ -466,14 +452,12 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Void> subscribeResourceAsync(String uri) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			SubscribeRequest request = new SubscribeRequest();
-			SubscribeRequestParameters parameters = new SubscribeRequestParameters();
-			parameters.setUri(uri);
-			request.setParameters(parameters);
-			
-			client.sendRequest(request);
-		});
+		SubscribeRequest request = new SubscribeRequest();
+		SubscribeRequestParameters parameters = new SubscribeRequestParameters();
+		parameters.setUri(uri);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, EmptyResult.class).thenAccept(result -> {});
 	}
 
 	/* (non-Javadoc)
@@ -482,14 +466,12 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Void> unsubscribeResourceAsync(String uri) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			UnsubscribeRequest request = new UnsubscribeRequest();
-			UnsubscribeRequestParameters parameters = new UnsubscribeRequestParameters();
-			parameters.setUri(uri);
-			request.setParameters(parameters);
-			
-			client.sendRequest(request);
-		});
+		UnsubscribeRequest request = new UnsubscribeRequest();
+		UnsubscribeRequestParameters parameters = new UnsubscribeRequestParameters();
+		parameters.setUri(uri);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, EmptyResult.class).thenAccept(result -> {});
 	}
 
 	/* (non-Javadoc)
@@ -498,15 +480,13 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<GetPromptResult> getPromptAsync(String name, Map<String, String> arguments) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			GetPromptRequest request = new GetPromptRequest();
-			GetPromptRequestParameters parameters = new GetPromptRequestParameters();
-			parameters.setName(name);
-			parameters.setArguments(arguments);
-			request.setParameters(parameters);
-			
-			return client.sendRequest(request);
-		});
+		GetPromptRequest request = new GetPromptRequest();
+		GetPromptRequestParameters parameters = new GetPromptRequestParameters();
+		parameters.setName(name);
+		parameters.setArguments(arguments);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, GetPromptResult.class);
 	}
 
 	/* (non-Javadoc)
@@ -515,15 +495,12 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Tool[]> listToolsAsync(String cursor) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			ListToolsRequest request = new ListToolsRequest();
-			PaginatedRequestParameters parameters = new PaginatedRequestParameters();
-			parameters.setCursor(cursor);
-			request.setParameters(parameters);
-			
-			ListToolsResult result = client.sendRequest(request);
-			return result.getTools();
-		});
+		ListToolsRequest request = new ListToolsRequest();
+		PaginatedRequestParameters parameters = new PaginatedRequestParameters();
+		parameters.setCursor(cursor);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, ListToolsResult.class).thenApply(result -> result.getTools());
 	}
 
 	/* (non-Javadoc)
@@ -532,15 +509,13 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<CallToolResult> callToolAsync(String name, Map<String, Object> arguments) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			CallToolRequest request = new CallToolRequest();
-			CallToolRequestParameters parameters = new CallToolRequestParameters();
-			parameters.setName(name);
-			parameters.setArguments(arguments);
-			request.setParameters(parameters);
-			
-			return client.sendRequest(request);
-		});
+		CallToolRequest request = new CallToolRequest();
+		CallToolRequestParameters parameters = new CallToolRequestParameters();
+		parameters.setName(name);
+		parameters.setArguments(arguments);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, CallToolResult.class);
 	}
 
 	/* (non-Javadoc)
@@ -549,14 +524,12 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Void> setLoggingLevelAsync(LoggingLevel level) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			SetLevelRequest request = new SetLevelRequest();
-			SetLevelRequestParameters parameters = new SetLevelRequestParameters();
-			parameters.setLevel(level);
-			request.setParameters(parameters);
-			
-			client.sendRequest(request);
-		});
+		SetLevelRequest request = new SetLevelRequest();
+		SetLevelRequestParameters parameters = new SetLevelRequestParameters();
+		parameters.setLevel(level);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, EmptyResult.class).thenAccept(result -> {});
 	}
 
 	/* (non-Javadoc)
@@ -565,16 +538,13 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Completion> completeAsync(Reference reference, Argument argument) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			CompleteRequest request = new CompleteRequest();
-			CompleteRequestParameters parameters = new CompleteRequestParameters();
-			parameters.setReference(reference);
-			parameters.setArgument(argument);
-			request.setParameters(parameters);
-			
-			CompleteResult result = client.sendRequest(request);
-			return result.getCompletion();
-		});
+		CompleteRequest request = new CompleteRequest();
+		CompleteRequestParameters parameters = new CompleteRequestParameters();
+		parameters.setReference(reference);
+		parameters.setArgument(argument);
+		request.setParameters(parameters);
+		
+		return client.sendRequest(request, CompleteResult.class).thenApply(result -> result.getCompletion());
 	}
 
 	/* (non-Javadoc)
@@ -583,11 +553,11 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Void> sendRootListChangedAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			if (Boolean.TRUE.equals(client.getClientCapabilities().getRoots().getListChanged())) {
-				client.sendNotification(new RootsListChangedNotification());
-			}
-		});
+		if (Boolean.TRUE.equals(client.getClientCapabilities().getRoots().getListChanged())) {
+			return client.sendNotification(new RootsListChangedNotification());
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -600,10 +570,15 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 		Preconditions.checkState(client.getClientCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
 		Preconditions.checkState(!roots.containsKey(root.getUri()), "Root with uri '" + root.getUri() + "' already exists");
 		
-		return CompletableFuture.runAsync(() -> {
+		if (client.getClientCapabilities().getRoots() != null) {
 			roots.put(root.getUri(), root);
 			LOGGER.info("Added root: " + root.getUri() + " (" + root.getName() + ")");
-		}).thenCompose(result -> client.getClientCapabilities().getRoots().getListChanged() ? sendRootListChangedAsync() : CompletableFuture.completedFuture(null));
+		
+			if (client.getClientCapabilities().getRoots().getListChanged())
+				return sendRootListChangedAsync();
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -616,12 +591,15 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 		Preconditions.checkState(client.getClientCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
 		Preconditions.checkState(roots.containsKey(uri), "Root with uri '" + uri + "' does not exist");
 		
-		return CompletableFuture.supplyAsync(() -> {
+		if (client.getClientCapabilities().getRoots() != null) {
 			Root removed = roots.remove(uri);
 			if (removed != null) {
 				LOGGER.info("Removed root: " + removed.getUri() + " (" + removed.getName() + ")");
+				if (client.getClientCapabilities().getRoots().getListChanged()) 
+					return sendRootListChangedAsync();
 			}
-			return removed;
-		}).thenCompose(removed -> removed != null && client.getClientCapabilities().getRoots().getListChanged() ? sendRootListChangedAsync() : CompletableFuture.completedFuture(null));
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 }

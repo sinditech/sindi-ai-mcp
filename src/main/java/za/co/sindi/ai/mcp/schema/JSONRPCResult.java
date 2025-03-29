@@ -12,7 +12,7 @@ public final class JSONRPCResult extends JSONRPCMessage {
 	private long id;
 	
 	@JsonbProperty
-	private Result result;
+	private Object result;
 
 	/**
 	 * @return the id
@@ -31,14 +31,14 @@ public final class JSONRPCResult extends JSONRPCMessage {
 	/**
 	 * @return the result
 	 */
-	public Result getResult() {
+	public Object getResult() {
 		return result;
 	}
 
 	/**
 	 * @param result the result to set
 	 */
-	public void setResult(Result result) {
+	public void setResult(Object result) {
 		this.result = result;
 	}
 }

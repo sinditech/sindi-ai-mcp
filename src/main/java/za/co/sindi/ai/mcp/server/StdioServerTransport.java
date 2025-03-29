@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
@@ -28,6 +27,8 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 	
 	private OutputStream outputStream = System.out;
 	
+	private CompletableFuture<Void> readerFuture;
+	
 	/**
 	 * 
 	 */
@@ -36,16 +37,39 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 	}
 
 	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.shared.Transport#start()
+	 * @see za.co.sindi.ai.mcp.shared.Transport#startAsync()
 	 */
 	@Override
-	public void start() {
+	public CompletableFuture<Void> startAsync() {
 		// TODO Auto-generated method stub
 		if (!initialized.compareAndSet(false, true)) {
 			throw new IllegalStateException("This stdio server transport has not been started.");
 		}
 		
+		Runnable runnable = () -> {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+			try {
+				String line = null;
+				while (initialized.get() && (line = reader.readLine()) != null);
+				if (!line.endsWith("\n")) 
+                	throw new TransportException("Message does not end with a newline.");
+				
+				getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(line));
+			} catch (Throwable e) {
+				// TODO Auto-generated catch block
+				getMessageHandler().onError(e);
+			} finally {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					//Shhh...be quiet! Tonight is the night that we ride....
+				}
+			}
+		};
 		
+		readerFuture = getExecutor() != null ?  CompletableFuture.runAsync(runnable, getExecutor()) : CompletableFuture.runAsync(runnable);
+		return readerFuture;
 	}
 
 	/* (non-Javadoc)
@@ -81,27 +105,7 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 				throw new TransportException(e);
 			}
 		});
-		CompletableFuture<Void> resultMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(new BufferedReader(new InputStreamReader(inputStream)))) : CompletableFuture.supplyAsync(readContent(new BufferedReader(new InputStreamReader(inputStream))), getExecutor()))
-					.thenAccept(line -> {
-						if (line == null) return ;
-						if (!line.endsWith("\n")) 
-		                	throw new TransportException("Message does not end with a newline.");
-						
-						getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(line));
-					});
 		
-		return future.thenCompose(c -> resultMessageFuture);
-	}
-	
-	private <T> Supplier<String> readContent(final BufferedReader reader) {
-		return () -> {
-			try {
-				String line = null;
-	            while (initialized.get() && (line = reader.readLine()) != null);
-	            return line;
-			} catch (IOException e) {
-				throw new TransportException(e);
-			}
-		};
+		return future.thenCompose(c -> readerFuture);
 	}
 }

@@ -3,7 +3,6 @@ package za.co.sindi.ai.mcp.server;
 import za.co.sindi.ai.mcp.schema.CallToolResult;
 import za.co.sindi.ai.mcp.schema.CreateMessageRequest.CreateMessageRequestParameters;
 import za.co.sindi.ai.mcp.schema.CreateMessageResult;
-import za.co.sindi.ai.mcp.schema.EmptyResult;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
 import za.co.sindi.ai.mcp.schema.ListResourceTemplatesResult;
 import za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters;

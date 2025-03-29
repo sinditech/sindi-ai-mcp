@@ -2,7 +2,6 @@ package za.co.sindi.ai.mcp.server;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
@@ -70,10 +69,10 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	}
 
 	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.shared.Transport#start()
+	 * @see za.co.sindi.ai.mcp.shared.Transport#startAsync()
 	 */
 	@Override
-	public void start() {
+	public CompletableFuture<Void> startAsync() {
 		// TODO Auto-generated method stub
 		if (sseSession == null) {
 			throw new TransportException("SSE session hasn't been initialized! Set the session with the setSseSession() method.");
@@ -86,14 +85,7 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 		Runnable runner = () -> {
 			sseSession.broadcast(TEXT_PLAIN, ENDPOINT_EVENT_TYPE, messageEndpoint + "?" + sessionIdParameterName + "=" + sessionId);
 		};
-		CompletableFuture<Void> future = getExecutor() != null ?  CompletableFuture.runAsync(runner, getExecutor()) : CompletableFuture.runAsync(runner);
-		try {
-			future.get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			sseSession.close();
-			getMessageHandler().onError(e);
-		}
+		return getExecutor() != null ?  CompletableFuture.runAsync(runner, getExecutor()) : CompletableFuture.runAsync(runner);
 	}
 
 	/* (non-Javadoc)
@@ -113,7 +105,7 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 		Runnable runner = () -> {
 			sseSession.broadcast(APPLICATION_JSON, MESSAGE_EVENT_TYPE, MCPSchema.serializeJSONRPCMessage(message)); // getMapper().map(message)
 		};
-		return getExecutor() != null ?  CompletableFuture.runAsync(runner, getExecutor()) : CompletableFuture.runAsync(runner);
+		return getExecutor() != null ? CompletableFuture.runAsync(runner, getExecutor()) : CompletableFuture.runAsync(runner);
 	}
 
 	/* (non-Javadoc)

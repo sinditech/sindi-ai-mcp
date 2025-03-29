@@ -46,7 +46,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	private final AtomicLong requestId = new AtomicLong(0);
 	
 	/** Map of request handlers keyed by method name */
-	private final ConcurrentHashMap<String, RequestHandler<? extends RES>> requestHandlers = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, RequestHandler<? extends Result>> requestHandlers = new ConcurrentHashMap<>();
 
 	/** Map of notification handlers keyed by method name */
 	private final ConcurrentHashMap<String, NotificationHandler> notificationHandlers = new ConcurrentHashMap<>();
@@ -63,20 +63,19 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	
 	private Duration requestTimeout;
 	
-	private RequestHandler<? extends RES> fallbackRequestHandler;
+	private RequestHandler<? extends Result> fallbackRequestHandler;
 	
 	private NotificationHandler fallbackNotificationHandler; 
 	
 	/**
 	 * @param transport
 	 */
-	@SuppressWarnings("unchecked")
 	protected Protocol(T transport) {
 		super();
 		this.transport = Objects.requireNonNull(transport, "A MCP Transport is required.");
 		setRequestTimeout(DEFAULT_REQUEST_TIMEOUT_MSEC);
 		
-		requestHandlers.put(PingRequest.METHOD_PING, request -> (RES)Schema.EMPTY_RESULT);
+		requestHandlers.put(PingRequest.METHOD_PING, request -> Schema.EMPTY_RESULT);
 	}
 
 	/**
@@ -117,7 +116,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	/**
 	 * @param fallbackRequestHandler the fallbackRequestHandler to set
 	 */
-	public void setFallbackRequestHandler(RequestHandler<? extends RES> fallbackRequestHandler) {
+	public void setFallbackRequestHandler(RequestHandler<? extends Result> fallbackRequestHandler) {
 		this.fallbackRequestHandler = fallbackRequestHandler;
 	}
 
@@ -150,6 +149,15 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	public void onError(final Throwable throwable) {}
 	
 	public void connect() {
+		try {
+			connectAsync().get();
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
+			throw new TransportException(e);
+		}
+	}
+	
+	public CompletableFuture<Void> connectAsync() {
 		final String type = this instanceof Server ? "Server" : this instanceof Client ? "Client" : "Protocol";
 		transport.setMessageHandler(new JSONRPCMessageHandler() {
 			
@@ -189,22 +197,22 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			}
 		});
 		
-		transport.start();
+		return transport.startAsync();
 	}
 	
-	public void sendNotification(N notification) {
+	public CompletableFuture<Void> sendNotification(N notification) {
 		JSONRPCNotification jsonRPCNotification = MCPSchema.toJSONRPCNotification(notification);
 		LOGGER.info("Sending notification: " + jsonRPCNotification.getMethod());
-		transport.send(jsonRPCNotification);
+		return transport.sendAsync(jsonRPCNotification);
 	}
 	
 	@SuppressWarnings("hiding")
-	public <T extends RES> T sendRequest(REQ request) {
+	public <T extends Result> CompletableFuture<T> sendRequest(REQ request, Class<T> resultType) {
 		CompletableFuture<T> cf = new CompletableFuture<>();
 		JSONRPCRequest jsonRpcRequest = MCPSchema.toJSONRPCRequest(request);
 		LOGGER.info("Sending request: " + jsonRpcRequest.getMethod());
 		
-		long messageId = requestId.incrementAndGet();
+		long messageId = requestId.getAndIncrement();
 		jsonRpcRequest.setId(messageId);
 		
 		//TODO: Handle progress?
@@ -229,10 +237,10 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			
 			@SuppressWarnings("unchecked")
 			@Override
-			public void handle(Result result) {
+			public void handle(JSONRPCResult result) {
 				// TODO Auto-generated method stub
 				try {
-					cf.complete((T)result);
+					cf.complete(MCPSchema.toResult(result, resultType));
 				} catch (Throwable cause) {
 					cf.completeExceptionally(cause);
 				}
@@ -250,25 +258,27 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	        cancelledNotification.setParameters(parameters);
 	        transport.send(MCPSchema.toJSONRPCNotification(cancelledNotification));
 	        
-	        cf.completeExceptionally(throwable);
+//	        cf.completeExceptionally(throwable);
 		};
 		
-		try {
-			transport.sendAsync(jsonRpcRequest).get(requestTimeout.toMillis(), TimeUnit.MILLISECONDS);
-			return cf.get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			throw new TransportException(e);
-		} catch (TimeoutException e) {
-			// TODO Auto-generated catch block
-			LOGGER.severe("Request timed out after " + requestTimeout.toMillis() + "ms: " + jsonRpcRequest.getMethod());
-			cancel.accept(e);
-			cf.cancel(true);
-			throw new TransportException(e);
-		}
+		transport.sendAsync(jsonRpcRequest)
+		 .orTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS)
+		 .whenComplete((result, exception) -> {
+			 if (exception != null) {
+				 // Handle timeout or other errors
+				 if (exception instanceof TimeoutException) {
+					 LOGGER.severe("Request timed out after " + requestTimeout.toMillis() + "ms: " + jsonRpcRequest.getMethod());
+					 cancel.accept(exception);
+					 cf.cancel(true);
+				 }
+				 cf.completeExceptionally(exception);
+			 }
+		 });
+		
+		return cf;
 	}
 	
-	public void addRequestHandler(final String method, final RequestHandler<? extends RES> handler) {
+	public void addRequestHandler(final String method, final RequestHandler<? extends Result> handler) {
 		requestHandlers.put(method, handler);
 	}
 	
@@ -278,38 +288,33 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	
 	private void onJSONRPCRequest(JSONRPCRequest request) {
 		LOGGER.info("Received request: " + request.getMethod() + ", ID: " + request.getId());
-		RequestHandler<? extends RES> handler = requestHandlers.containsKey(request.getMethod()) ? requestHandlers.get(request.getMethod()) : fallbackRequestHandler;
+		RequestHandler<? extends Result> handler = requestHandlers.containsKey(request.getMethod()) ? requestHandlers.get(request.getMethod()) : fallbackRequestHandler;
 		
 		if (handler == null) {
 			LOGGER.info("No handler found for request: " + request.getMethod());
-			try {
-				sendError(request.getId(), ErrorCodes.METHOD_NOT_FOUND, "Server does not support " + request.getMethod());
-			} catch(Throwable throwable) {
+			sendError(request.getId(), ErrorCodes.METHOD_NOT_FOUND, "Server does not support " + request.getMethod())
+			.exceptionally(throwable -> {
 				LOGGER.severe("Error sending method not found response.");
 				Protocol.this.onError(throwable);
-			}
-			return;
-		}
-		
-		try {
-			RES result = handler.handle(request);
+				return null;
+			});
+		} else {
+			Result result = handler.handle(request);
 			LOGGER.info("Request handled successfully: " + request.getMethod() + ", ID: " + request.getId());
-			JSONRPCResult jsonRPCResult = new JSONRPCResult();
-			jsonRPCResult.setJsonrpc(JSONRPCVersion.getLatest());
-			jsonRPCResult.setId(request.getId());
-			jsonRPCResult.setResult(result);
-			transport.send(jsonRPCResult);
-		} catch(Throwable throwable) {
-			try {
-				LOGGER.severe("Error handling request: " + request.getMethod() + ", ID: " + request.getId());
-				if (throwable instanceof MCPError error) {
-					sendError(request.getId(), error.getCode(), error.getMessage());
-				} else {
-					sendError(request.getId(), ErrorCodes.INTERNAL_ERROR, Strings.isNullOrEmpty(throwable.getMessage()) ? "Internal error." : throwable.getMessage());
+			sendResult(request.getId(), result)
+			.handle((response, throwable) -> {
+				if (throwable != null) {
+					LOGGER.severe("Error handling request: " + request.getMethod() + ", ID: " + request.getId());
+					if (throwable instanceof MCPError error) {
+						return sendError(request.getId(), error.getCode(), error.getMessage());
+					} else {
+						return sendError(request.getId(), ErrorCodes.INTERNAL_ERROR, Strings.isNullOrEmpty(throwable.getMessage()) ? "Internal error." : throwable.getMessage());
+					}
 				}
-			} catch(Throwable sendError) {
-				LOGGER.log(Level.SEVERE, "Failed to send error response for request: " + request.getMethod() + ", ID: " + request.getId(), sendError);
-			}
+				
+				// If no exception, return the original result
+	            return CompletableFuture.completedFuture(response);
+			}).thenCompose(future -> future);
 		}
 	}
 	
@@ -341,13 +346,22 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		progressHandlers.remove(responseId);
 		
 		if (jsonRpcResult != null) {
-			handler.handle(jsonRpcResult.getResult());
+			handler.handle(jsonRpcResult);
 		} else if (jsonRpcError != null) {
 			handler.handle(jsonRpcError.getError());
 		}
 	}
 	
-	private void sendError(final long id, final int errorCode, final String message) {
+	private CompletableFuture<Void> sendResult(final long requestId, final Result result) {
+		JSONRPCResult jsonRPCResult = new JSONRPCResult();
+		jsonRPCResult.setJsonrpc(JSONRPCVersion.getLatest());
+		jsonRPCResult.setId(requestId);
+		jsonRPCResult.setResult(result);
+		
+		return transport.sendAsync(jsonRPCResult);
+	}
+	
+	private CompletableFuture<Void> sendError(final long id, final int errorCode, final String message) {
 		JSONRPCError jsonRPCError = new JSONRPCError();
 		jsonRPCError.setJsonrpc(JSONRPCVersion.getLatest());
 		jsonRPCError.setId(id);
@@ -356,6 +370,6 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		error.setMessage(message);
 		jsonRPCError.setError(error);
 		
-		transport.send(jsonRPCError);
+		return transport.sendAsync(jsonRPCError);
 	}
 }

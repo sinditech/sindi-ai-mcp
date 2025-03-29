@@ -111,6 +111,15 @@ public final class MCPSchema {
 		return objectMapper.map(objectMapper.map(notification), requestClass);
 	}
 	
+	public static <T extends Result> T toResult(JSONRPCResult result, final Class<T> resultType) {
+		return toResult(MAPPER, result, resultType);
+	}
+	
+	public static <T extends Result> T toResult(ObjectMapper objectMapper, JSONRPCResult result, final Class<T> resultType) {
+		return objectMapper.map(objectMapper.map(result.getResult()), resultType);
+	}
+	
+	
 	public static <T extends Request> JSONRPCRequest toJSONRPCRequest(T request) {
 		return toJSONRPCRequest(MAPPER, request);
 	}
@@ -120,7 +129,7 @@ public final class MCPSchema {
 	}
 	
 	public static <T extends Request> JSONRPCRequest toJSONRPCRequest(ObjectMapper objectMapper, JSONRPCVersion jsonRPCVersion, T request) {
-		JSONRPCRequest jsonRPCRequest = (JSONRPCRequest) deserializeJSONRPCMessage(objectMapper.map(request));
+		JSONRPCRequest jsonRPCRequest = objectMapper.map(objectMapper.map(request), JSONRPCRequest.class);
 		jsonRPCRequest.setJsonrpc(jsonRPCVersion);
 		jsonRPCRequest.setMethod(REQUEST_METHODS.get(request.getClass()));
 		return jsonRPCRequest;
@@ -136,7 +145,7 @@ public final class MCPSchema {
 	}
 	
 	public static <T extends Notification> JSONRPCNotification toJSONRPCNotification(ObjectMapper objectMapper, JSONRPCVersion jsonRPCVersion, T notification) {
-		JSONRPCNotification jsonRPCNotification = (JSONRPCNotification) deserializeJSONRPCMessage(objectMapper.map(notification));
+		JSONRPCNotification jsonRPCNotification = objectMapper.map(objectMapper.map(notification), JSONRPCNotification.class);
 		jsonRPCNotification.setJsonrpc(jsonRPCVersion);
 		jsonRPCNotification.setMethod(NOTIFICATION_METHODS.get(notification.getClass()));
 		return jsonRPCNotification;

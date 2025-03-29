@@ -68,7 +68,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	
 	private final Server server;
 	
-	private LoggingLevel loggingLevel;
+	private LoggingLevel loggingLevel = LoggingLevel.DEBUG;
 	
 	/**
 	 * @param transport
@@ -112,7 +112,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	private RequestHandler<EmptyResult> setLoggingLevelRequestHandler() {
 		
 		return request -> {
-			loggingLevel= LoggingLevel.of(String.valueOf(request.getParams().get("level")));
+			loggingLevel = LoggingLevel.of(String.valueOf(request.getParams().get("level")));
 			return Schema.EMPTY_RESULT;
 		};
 	}
@@ -430,10 +430,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Void> pingAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			EmptyResult result = server.sendRequest(new PingRequest());
-			return result;
-		}).thenAccept(result -> {});
+		return server.sendRequest(new PingRequest(), EmptyResult.class).thenAccept(result -> {});
 	}
 
 	/* (non-Javadoc)
@@ -442,11 +439,9 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<CreateMessageResult> createMessageAsync(CreateMessageRequestParameters parameters) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			CreateMessageRequest request = new CreateMessageRequest();
-			request.setParameters(parameters);
-			return server.sendRequest(request);
-		});
+		CreateMessageRequest request = new CreateMessageRequest();
+		request.setParameters(parameters);
+		return server.sendRequest(request, CreateMessageResult.class);
 	}
 
 	/* (non-Javadoc)
@@ -455,10 +450,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Root[]> listRootsAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.supplyAsync(() -> {
-			ListRootsResult result = server.sendRequest(new ListRootsRequest());
-			return result.getRoots();
-		});
+		return server.sendRequest(new ListRootsRequest(), ListRootsResult.class).thenApply(result -> result.getRoots());
 	}
 
 	/* (non-Javadoc)
@@ -467,11 +459,9 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Void> sendLoggingMessageAsync(LoggingMessageNotificationParameters parameters) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			LoggingMessageNotification notification = new LoggingMessageNotification();
-			notification.setParameters(parameters);
-			server.sendNotification(notification);
-		});
+		LoggingMessageNotification notification = new LoggingMessageNotification();
+		notification.setParameters(parameters);
+		return server.sendNotification(notification);
 	}
 
 	/* (non-Javadoc)
@@ -480,13 +470,11 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Void> sendResourceUpdatedAsync(String uri) {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			ResourceUpdatedNotification notification = new ResourceUpdatedNotification();
-			ResourceUpdatedNotificationParameters parameters = new ResourceUpdatedNotificationParameters();
-			parameters.setUri(uri);
-			notification.setParameters(parameters);
-			server.sendNotification(notification);
-		});
+		ResourceUpdatedNotification notification = new ResourceUpdatedNotification();
+		ResourceUpdatedNotificationParameters parameters = new ResourceUpdatedNotificationParameters();
+		parameters.setUri(uri);
+		notification.setParameters(parameters);
+		return server.sendNotification(notification);
 	}
 
 	/* (non-Javadoc)
@@ -495,9 +483,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Void> sendResourceListChangedAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			server.sendNotification(new ResourceListChangedNotification());
-		});
+		return server.sendNotification(new ResourceListChangedNotification());
 	}
 
 	/* (non-Javadoc)
@@ -506,9 +492,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Void> sendToolListChangedAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			server.sendNotification(new ToolListChangedNotification());
-		});
+		return server.sendNotification(new ToolListChangedNotification());
 	}
 
 	/* (non-Javadoc)
@@ -517,9 +501,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Void> sendPromptListChangedAsync() {
 		// TODO Auto-generated method stub
-		return CompletableFuture.runAsync(() -> {
-			server.sendNotification(new PromptListChangedNotification());
-		});
+		return server.sendNotification(new PromptListChangedNotification());
 	}
 
 	/* (non-Javadoc)
@@ -532,10 +514,14 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(handler != null, "Tool call handler must not be null.");
 		Preconditions.checkState(server.getServerCapabilities().getTools() != null, "Server does not support tools capability.");
 		
-		return CompletableFuture.runAsync(() -> {
+		if (server.getServerCapabilities().getTools() != null) {
 			LOGGER.info("Registering tool: " + tool.getName());
 			tools.put(tool.getName(), new RegisteredTool(tool, handler));
-		}).thenCompose(result -> server.getServerCapabilities().getTools().getListChanged() ? sendToolListChangedAsync() : CompletableFuture.completedFuture(null));
+			
+			if (server.getServerCapabilities().getTools().getListChanged()) return sendToolListChangedAsync();
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -547,13 +533,16 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(toolName), "Tool name must not be null or empty.");
 		Preconditions.checkState(server.getServerCapabilities().getTools() != null, "Server does not support tools capability.");
 		
-		return CompletableFuture.supplyAsync(() -> {
+		if (server.getServerCapabilities().getTools() != null) {
 			RegisteredTool removed = tools.remove(toolName);
 			if (removed != null) {
 				LOGGER.info("Removed tool: " + toolName);
+				
+				if (server.getServerCapabilities().getTools().getListChanged()) return sendToolListChangedAsync();
 			}
-			return removed;
-		}).thenCompose(removed -> removed != null && server.getServerCapabilities().getTools().getListChanged() ? sendToolListChangedAsync() : CompletableFuture.completedFuture(null));
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -566,10 +555,14 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(promptProvider != null, "Prompt handler must not be null.");
 		Preconditions.checkState(server.getServerCapabilities().getPrompts() != null, "Server does not support prompts capability.");
 		
-		return CompletableFuture.runAsync(() -> {
+		if (server.getServerCapabilities().getPrompts() != null) {
 			LOGGER.info("Registering Prompt: " + prompt.getName());
 			prompts.put(prompt.getName(), new RegisteredPrompt(prompt, promptProvider));
-		}).thenCompose(result -> server.getServerCapabilities().getPrompts().getListChanged() ? sendPromptListChangedAsync() : CompletableFuture.completedFuture(null));
+			
+			if (server.getServerCapabilities().getPrompts().getListChanged()) return sendPromptListChangedAsync();
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -581,13 +574,16 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(promptName), "Prompt name must not be null or empty.");
 		Preconditions.checkState(server.getServerCapabilities().getPrompts() != null, "Server does not support prompts capability.");
 		
-		return CompletableFuture.supplyAsync(() -> {
+		if (server.getServerCapabilities().getPrompts() != null) {
 			RegisteredPrompt removed = prompts.remove(promptName);
 			if (removed != null) {
 				LOGGER.info("Removed prompt: " + promptName);
+				
+				if (server.getServerCapabilities().getPrompts().getListChanged()) return sendPromptListChangedAsync();
 			}
-			return removed;
-		}).thenCompose(removed -> removed != null && server.getServerCapabilities().getPrompts().getListChanged() ? sendPromptListChangedAsync() : CompletableFuture.completedFuture(null));
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -600,10 +596,14 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(readHandler != null, "Resource read handler must not be null.");
 		Preconditions.checkState(server.getServerCapabilities().getResources() != null, "Server does not support resources capability.");
 		
-		return CompletableFuture.runAsync(() -> {
+		if (server.getServerCapabilities().getResources() != null) {
 			LOGGER.info("Registering Resource: " + resource.getUri());
 			resources.put(resource.getUri(), new RegisteredResource(resource, readHandler));
-		}).thenCompose(result -> server.getServerCapabilities().getResources().getListChanged() ? sendResourceListChangedAsync() : CompletableFuture.completedFuture(null));
+			
+			if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -615,13 +615,16 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(uri), "Resource uri must not be null or empty.");
 		Preconditions.checkState(server.getServerCapabilities().getResources() != null, "Server does not support resources capability.");
 		
-		return CompletableFuture.supplyAsync(() -> {
+		if (server.getServerCapabilities().getResources() != null) {
 			RegisteredResource removed = resources.remove(uri);
 			if (removed != null) {
 				LOGGER.info("Removed resource: " + uri);
+				
+				if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
 			}
-			return removed;
-		}).thenCompose(removed -> removed != null && server.getServerCapabilities().getResources().getListChanged() ? sendResourceListChangedAsync() : CompletableFuture.completedFuture(null));
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -635,10 +638,14 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(readCallback != null, "Resource read callback handler must not be null.");
 		Preconditions.checkState(server.getServerCapabilities().getResources() != null, "Server does not support resources capability.");
 		
-		return CompletableFuture.runAsync(() -> {
+		if (server.getServerCapabilities().getResources() != null) {
 			LOGGER.info("Registering Resource template: " + resourceTemplate.getUriTemplate());
 			resourceTemplates.put(resourceTemplate.getUriTemplate(), new RegisteredResourceTemplate(resourceTemplate, readCallback));
-		}).thenCompose(result -> server.getServerCapabilities().getResources().getListChanged() ? sendResourceListChangedAsync() : CompletableFuture.completedFuture(null));
+			
+			if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/* (non-Javadoc)
@@ -650,12 +657,15 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(uriTemplate), "Resource template uri must not be null or empty.");
 		Preconditions.checkState(server.getServerCapabilities().getResources() != null, "Server does not support resources capability.");
 		
-		return CompletableFuture.supplyAsync(() -> {
+		if (server.getServerCapabilities().getResources() != null) {
 			RegisteredResourceTemplate removed = resourceTemplates.remove(uriTemplate);
 			if (removed != null) {
 				LOGGER.info("Removed resource template: " + uriTemplate);
+				
+				if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
 			}
-			return removed;
-		}).thenCompose(removed -> removed != null && server.getServerCapabilities().getResources().getListChanged() ? sendResourceListChangedAsync() : CompletableFuture.completedFuture(null));
+		}
+		
+		return CompletableFuture.completedFuture(null);	
 	}
 }

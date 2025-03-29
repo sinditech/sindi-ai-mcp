@@ -1,6 +1,6 @@
 package za.co.sindi.ai.mcp.shared;
 
-import za.co.sindi.ai.mcp.schema.Result;
+import za.co.sindi.ai.mcp.schema.JSONRPCResult;
 
 /**
  * @author Buhake Sindi
@@ -8,7 +8,7 @@ import za.co.sindi.ai.mcp.schema.Result;
  */
 public interface ResponseHandler {
 
-	public <T extends Result> void handle(T result);
+	public void handle(JSONRPCResult result);
 	
 	public void handle(Throwable cause);
 	

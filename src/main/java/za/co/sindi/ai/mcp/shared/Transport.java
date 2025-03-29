@@ -25,7 +25,16 @@ public interface Transport extends AutoCloseable {
 	
 	public void setMessageHandler(final JSONRPCMessageHandler messageHandler);
 	
-	public void start();
+	default void start() {
+		try {
+			startAsync().get();
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
+			throw new TransportException(e);
+		}
+	}
+	
+	public CompletableFuture<Void> startAsync();
 
 	default void send(final JSONRPCMessage message) {
 		try {
