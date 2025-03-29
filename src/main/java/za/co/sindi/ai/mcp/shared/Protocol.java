@@ -226,16 +226,16 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			@Override
 			public void handle(Throwable cause) {
 				// TODO Auto-generated method stub
+				LOGGER.log(Level.SEVERE, "Encountered the following exception.", cause);
 				cf.completeExceptionally(cause);
 			}
 
 			@Override
 			public void handle(Error error) {
 				// TODO Auto-generated method stub
-				cf.completeExceptionally(new IllegalStateException(error.getMessage()));
+				handle(new IllegalStateException(error.getMessage()));
 			}
 			
-			@SuppressWarnings("unchecked")
 			@Override
 			public void handle(JSONRPCResult result) {
 				// TODO Auto-generated method stub
