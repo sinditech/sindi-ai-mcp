@@ -23,6 +23,8 @@ public interface Transport extends AutoCloseable {
 	 */
 	public void setExecutor(Executor executor);
 	
+	public Executor getExecutor();
+	
 	public void setMessageHandler(final JSONRPCMessageHandler messageHandler);
 	
 	default void start() {

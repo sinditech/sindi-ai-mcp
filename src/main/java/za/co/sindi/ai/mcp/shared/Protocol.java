@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -57,7 +58,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	/** Map of progress handlers keyed by request id */
 	private final ConcurrentHashMap<Long, ProgressHandler> progressHandlers = new ConcurrentHashMap<>();
 	
-	private Executor executor;
+	private Executor executor = Executors.newVirtualThreadPerTaskExecutor();
 	
 	private T transport;
 	
@@ -197,6 +198,9 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			}
 		});
 		
+		if (transport.getExecutor() == null) {
+			transport.setExecutor(executor);
+		}
 		return transport.startAsync();
 	}
 	

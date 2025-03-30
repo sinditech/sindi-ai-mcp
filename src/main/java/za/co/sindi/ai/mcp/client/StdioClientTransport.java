@@ -29,6 +29,8 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 	
 	private Process process;
 	
+	private CompletableFuture<Void> transportFuture;
+	
 	/**
 	 * @param serverParameters
 	 */
@@ -43,10 +45,11 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 	@Override
 	public CompletableFuture<Void> startAsync() {
 		// TODO Auto-generated method stub
+		if (!initialized.compareAndSet(false, true)) {
+			throw new IllegalStateException("This stdio client transport has not been started.");
+		}
+		
 		Runnable runnable = () -> {
-			if (!initialized.compareAndSet(false, true)) {
-				throw new IllegalStateException("This stdio client transport has not been started.");
-			}
 			
 			final List<String> command = new ArrayList<>();
 			command.add(serverParameters.getCommand());
@@ -74,7 +77,32 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 				throw new TransportException("Process input or output stream is null");
 			}
 		};
-		return getExecutor() != null ?  CompletableFuture.runAsync(runnable, getExecutor()) : CompletableFuture.runAsync(runnable);
+		
+		CompletableFuture<Void> resultMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.inputReader())) : CompletableFuture.supplyAsync(readContent(process.inputReader()), getExecutor()))
+				.thenAccept(line -> {
+					if (line == null) return ;
+					if (!line.endsWith("\n")) 
+	                	throw new TransportException("Message does not end with a newline.");
+					
+					getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(line));
+				});
+		
+	CompletableFuture<Void> errorMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.errorReader())) : CompletableFuture.supplyAsync(readContent(process.errorReader()), getExecutor()))
+				.thenAccept(line -> {
+					if (line != null && getMessageHandler() != null) {
+						getMessageHandler().onError(new IllegalStateException(line));
+					}
+				});
+	
+	 	
+	 	transportFuture = resultMessageFuture.thenCombine(errorMessageFuture, (result, error) -> result)
+	 			.whenComplete((result, throwable) -> {
+						if (throwable != null) {
+							getMessageHandler().onError(throwable);
+						}
+					});
+		return (getExecutor() != null ? CompletableFuture.runAsync(runnable, getExecutor()) : CompletableFuture.runAsync(runnable))
+				.thenCompose(c -> transportFuture);
 	}
 
 	/* (non-Javadoc)
@@ -83,12 +111,10 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 	@Override
 	public void close() throws Exception {
 		// TODO Auto-generated method stub
-		super.close();
-		process.destroy();
 		initialized.compareAndSet(true, false);
-		if (getMessageHandler() != null) {
-			getMessageHandler().onClose();
-		}
+		process.destroy();
+		if (transportFuture != null) transportFuture.cancel(true);
+		super.close();
 	}
 	
 	/* (non-Javadoc)
@@ -114,22 +140,8 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 				}
 			}
 		});
-		CompletableFuture<Void> resultMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.inputReader())) : CompletableFuture.supplyAsync(readContent(process.inputReader()), getExecutor()))
-					.thenAccept(line -> {
-						if (line == null) return ;
-						if (!line.endsWith("\n")) 
-		                	throw new TransportException("Message does not end with a newline.");
-						
-						getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(line));
-					});
-		CompletableFuture<Void> errorMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.errorReader())) : CompletableFuture.supplyAsync(readContent(process.errorReader()), getExecutor()))
-					.thenAccept(line -> {
-						if (line != null && getMessageHandler() != null) {
-							getMessageHandler().onError(new IllegalStateException(line));
-						}
-					});
 		
-		return future.thenCompose(c -> resultMessageFuture.thenCombine(errorMessageFuture, (result, error) -> result));
+		return future; //future.thenCompose(c -> resultMessageFuture.thenCombine(errorMessageFuture, (result, error) -> result));
 	}
 	
 	private <T> Supplier<String> readContent(final BufferedReader reader) {

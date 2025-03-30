@@ -106,6 +106,6 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 			}
 		});
 		
-		return future.thenCompose(c -> readerFuture);
+		return future;
 	}
 }

@@ -36,6 +36,12 @@ public abstract class AbstractTransport implements Transport {
 		this.executor = executor;
 	}
 
+	@Override
+	public Executor getExecutor() {
+		// TODO Auto-generated method stub
+		return executor;
+	}
+
 	/* (non-Javadoc)
 	 * @see za.co.sindi.ai.mcp.shared.Transport#setMessageHandler(za.co.sindi.ai.mcp.shared.JSONRPCMessageHandler)
 	 */
@@ -54,13 +60,6 @@ public abstract class AbstractTransport implements Transport {
 		if (messageHandler != null) {
 			messageHandler.onClose();
 		}
-	}
-
-	/**
-	 * @return the executor
-	 */
-	protected Executor getExecutor() {
-		return executor;
 	}
 
 	/**
