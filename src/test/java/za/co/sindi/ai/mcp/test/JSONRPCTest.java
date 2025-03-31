@@ -1,10 +1,5 @@
 package za.co.sindi.ai.mcp.test;
 
-import za.co.sindi.ai.mcp.client.Client;
-import za.co.sindi.ai.mcp.client.DefaultClient;
-import za.co.sindi.ai.mcp.client.DefaultMCPClient;
-import za.co.sindi.ai.mcp.client.MCPClient;
-import za.co.sindi.ai.mcp.client.SSEClientTransport;
 import za.co.sindi.ai.mcp.mapper.JSONObjectMapper;
 import za.co.sindi.ai.mcp.mapper.ObjectMapper;
 import za.co.sindi.ai.mcp.schema.ClientCapabilities;
@@ -36,10 +31,5 @@ public class JSONRPCTest {
 		JSONRPCMessage object = MCPSchema.deserializeJSONRPCMessage(mapper, data);
 		System.out.println(object.getClass());
 		System.out.println("Done.");
-		
-		SSEClientTransport transport = new SSEClientTransport("http://localhost:9080");
-		Client client = new DefaultClient(transport, new ClientCapabilities.Builder().build(), new Implementation("Client", "1.0.0"));
-		MCPClient mcpClient = new DefaultMCPClient(client, null);
-		((DefaultMCPClient)mcpClient).connect();
 	}
 }
