@@ -78,11 +78,9 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 	@Override
 	public void close() throws Exception {
 		// TODO Auto-generated method stub
-		super.close();
 		initialized.compareAndSet(true, false);
-		if (getMessageHandler() != null) {
-			getMessageHandler().onClose();
-		}
+		if (readerFuture != null) readerFuture.cancel(true);
+		super.close();
 	}
 	
 	/* (non-Javadoc)
