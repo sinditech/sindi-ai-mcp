@@ -195,6 +195,24 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 		};
 	}
 
+	@Override
+	public void connect() {
+		// TODO Auto-generated method stub
+		server.connect();
+	}
+
+	@Override
+	public CompletableFuture<Void> connectAsync() {
+		// TODO Auto-generated method stub
+		return server.connectAsync();
+	}
+	
+	@Override
+	public void close() throws Exception {
+		// TODO Auto-generated method stub
+		server.close();
+	}
+
 	/* (non-Javadoc)
 	 * @see za.co.sindi.ai.mcp.server.MCPServer#ping()
 	 */

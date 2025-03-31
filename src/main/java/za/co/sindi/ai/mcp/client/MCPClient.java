@@ -22,6 +22,8 @@ import za.co.sindi.ai.mcp.schema.Tool;
  * @since 15 February 2025
  */
 public interface MCPClient {
+	
+	public void connect();
 
 	public InitializeResult initialize(final ClientCapabilities clientCapabilities, final Implementation clientInfo);
 	

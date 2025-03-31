@@ -24,6 +24,8 @@ import za.co.sindi.ai.mcp.schema.Tool;
  */
 public interface MCPAsyncClient {
 
+	public CompletableFuture<Void> connectAsync();
+	
 	public CompletableFuture<InitializeResult> initializeAsync(final ClientCapabilities clientCapabilities, final Implementation clientInfo);
 	
 	public CompletableFuture<Void> pingAsync();

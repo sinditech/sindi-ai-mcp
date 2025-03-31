@@ -49,34 +49,31 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 			throw new IllegalStateException("This stdio client transport has not been started.");
 		}
 		
-		Runnable runnable = () -> {
-			
-			final List<String> command = new ArrayList<>();
-			command.add(serverParameters.getCommand());
-			command.addAll(serverParameters.getArguments());
-	
-			ProcessBuilder processBuilder = new ProcessBuilder();
-			processBuilder.command(command);
-			processBuilder.environment().putAll(serverParameters.getEnvironmentVariables());
-			processBuilder.environment().putAll(System.getenv());
-			
-			// Start the process
-			try {
-				process = processBuilder.start();
-				process.onExit().thenRun(() -> {
-					LOGGER.log(Level.INFO, "Subprocess has exited with code: {}", process.exitValue());
-	            });
-			}
-			catch (IOException e) {
-				throw new TransportException("Failed to start process with command: " + command, e);
-			}
-			
-			// Validate process streams
-			if (this.process.getInputStream() == null || process.getOutputStream() == null) {
-				this.process.destroy();
-				throw new TransportException("Process input or output stream is null");
-			}
-		};
+		final List<String> command = new ArrayList<>();
+		command.add(serverParameters.getCommand());
+		command.addAll(serverParameters.getArguments());
+
+		ProcessBuilder processBuilder = new ProcessBuilder();
+		processBuilder.command(command);
+		if (serverParameters.getEnvironmentVariables() != null)	processBuilder.environment().putAll(serverParameters.getEnvironmentVariables());
+		processBuilder.environment().putAll(System.getenv());
+		
+		// Start the process
+		try {
+			process = processBuilder.start();
+			process.onExit().thenRun(() -> {
+				LOGGER.log(Level.INFO, "Subprocess has exited with code: {}", process.exitValue());
+            });
+		}
+		catch (IOException e) {
+			throw new TransportException("Failed to start process with command: " + command, e);
+		}
+		
+		// Validate process streams
+		if (this.process.getInputStream() == null || process.getOutputStream() == null) {
+			this.process.destroy();
+			throw new TransportException("Process input or output stream is null");
+		}
 		
 		CompletableFuture<Void> resultMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.inputReader())) : CompletableFuture.supplyAsync(readContent(process.inputReader()), getExecutor()))
 				.thenAccept(line -> {
@@ -101,8 +98,7 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 							getMessageHandler().onError(throwable);
 						}
 					});
-		return (getExecutor() != null ? CompletableFuture.runAsync(runnable, getExecutor()) : CompletableFuture.runAsync(runnable))
-				.thenCompose(c -> transportFuture);
+		return transportFuture;
 	}
 
 	/* (non-Javadoc)

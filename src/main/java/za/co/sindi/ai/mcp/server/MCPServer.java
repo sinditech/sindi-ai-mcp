@@ -20,7 +20,9 @@ import za.co.sindi.ai.mcp.shared.RequestHandler;
  * @author Buhake Sindi
  * @since 14 March 2025
  */
-public interface MCPServer {
+public interface MCPServer extends AutoCloseable {
+	
+	public void connect();
 
 	public void ping();
 	

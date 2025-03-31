@@ -138,7 +138,18 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	 */
 	public void connect() {
 		// TODO Auto-generated method stub
-		client.connectAsync()
+		try {
+			connectAsync().get();
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
+			client.onError(e);
+		}
+	}
+
+	@Override
+	public CompletableFuture<Void> connectAsync() {
+		// TODO Auto-generated method stub
+		return client.connectAsync()
 		  .thenCompose(result -> initializeAsync(client.getClientCapabilities(), client.getClientInfo()))
 		  .thenCompose(result -> {
 				Preconditions.checkState(result != null, "Server sent invalid initialize result.");
@@ -151,7 +162,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 				
 				//Notify
 				return client.sendNotification(new InitializedNotification());
-			}).join();
+			});
 	}
 
 	/* (non-Javadoc)
