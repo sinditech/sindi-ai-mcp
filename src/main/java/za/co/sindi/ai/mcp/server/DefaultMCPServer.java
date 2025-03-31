@@ -198,13 +198,18 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public void connect() {
 		// TODO Auto-generated method stub
-		server.connect();
+		try {
+			connectAsync().get();
+		} catch (InterruptedException | ExecutionException e) {
+			// TODO Auto-generated catch block
+			server.onError(e);
+		}
 	}
 
 	@Override
 	public CompletableFuture<Void> connectAsync() {
 		// TODO Auto-generated method stub
-		return server.connectAsync();
+		return server.connect();
 	}
 	
 	@Override

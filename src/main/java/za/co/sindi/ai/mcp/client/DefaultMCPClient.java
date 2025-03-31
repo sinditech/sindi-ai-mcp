@@ -149,7 +149,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	@Override
 	public CompletableFuture<Void> connectAsync() {
 		// TODO Auto-generated method stub
-		return client.connectAsync()
+		return client.connect()
 		  .thenCompose(result -> initializeAsync(client.getClientCapabilities(), client.getClientInfo()))
 		  .thenCompose(result -> {
 				Preconditions.checkState(result != null, "Server sent invalid initialize result.");

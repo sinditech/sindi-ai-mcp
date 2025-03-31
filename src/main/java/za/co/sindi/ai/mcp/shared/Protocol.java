@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -149,16 +148,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	
 	public void onError(final Throwable throwable) {}
 	
-	public void connect() {
-		try {
-			connectAsync().get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			throw new TransportException(e);
-		}
-	}
-	
-	public CompletableFuture<Void> connectAsync() {
+	public CompletableFuture<Void> connect() {
 		final String type = this instanceof Server ? "Server" : this instanceof Client ? "Client" : "Protocol";
 		transport.setMessageHandler(new JSONRPCMessageHandler() {
 			
