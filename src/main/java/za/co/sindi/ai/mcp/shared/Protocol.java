@@ -63,6 +63,8 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	
 	private Duration requestTimeout;
 	
+	private CloseCallback closeCallback;
+	
 	private RequestHandler<? extends Result> fallbackRequestHandler;
 	
 	private NotificationHandler fallbackNotificationHandler; 
@@ -114,6 +116,13 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	}
 
 	/**
+	 * @param closeCallback the closeCallback to set
+	 */
+	public void setCloseCallback(CloseCallback closeCallback) {
+		this.closeCallback = closeCallback;
+	}
+
+	/**
 	 * @param fallbackRequestHandler the fallbackRequestHandler to set
 	 */
 	public void setFallbackRequestHandler(RequestHandler<? extends Result> fallbackRequestHandler) {
@@ -144,12 +153,9 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		}
 	}
 	
-	public void onClose() {}
-	
 	public void onError(final Throwable throwable) {}
 	
 	public CompletableFuture<Void> connect() {
-		final String type = this instanceof Server ? "Server" : this instanceof Client ? "Client" : "Protocol";
 		transport.setMessageHandler(new JSONRPCMessageHandler() {
 			
 			@Override
@@ -175,16 +181,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			@Override
 			public void onClose() {
 				// TODO Auto-generated method stub
-				LOGGER.info(type + " transport closed.");
-				progressHandlers.clear();
 				Protocol.this.onClose();
-				
-				var mcpError = new MCPError(ErrorCodes.CONNECTION_CLOSED, type + " connection closed.");
-				for (ResponseHandler handler: responseHandlers.values()) {
-					handler.handle(mcpError);
-				}
-				
-				responseHandlers.clear();
 			}
 		});
 		
@@ -278,6 +275,22 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	
 	public void addNotificationHandler(final String method, final NotificationHandler handler) {
 		notificationHandlers.put(method, handler);
+	}
+	
+	private void onClose() {
+		final String type = this instanceof Server ? "Server" : this instanceof Client ? "Client" : "Protocol";
+		LOGGER.info(type + " transport closed.");
+		progressHandlers.clear();
+		if (closeCallback != null) {
+			closeCallback.onClose();
+		}
+		
+		var mcpError = new MCPError(ErrorCodes.CONNECTION_CLOSED, type + " connection closed.");
+		for (ResponseHandler handler: responseHandlers.values()) {
+			handler.handle(mcpError);
+		}
+		
+		responseHandlers.clear();
 	}
 	
 	private void onJSONRPCRequest(JSONRPCRequest request) {

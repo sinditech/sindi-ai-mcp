@@ -22,7 +22,7 @@ import za.co.sindi.ai.mcp.shared.RequestHandler;
  * @author Buhake Sindi
  * @since 14 March 2025
  */
-public interface MCPAsyncServer extends AutoCloseable {
+public interface MCPAsyncServer {
 	
 	public CompletableFuture<Void> connectAsync();
 
