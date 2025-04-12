@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.CancelledNotification.CancelledNotificationParameters;
-import za.co.sindi.ai.mcp.shared.RequestId;
 
 /**
  * @author Buhake Sindi

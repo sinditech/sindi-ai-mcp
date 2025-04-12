@@ -2,6 +2,7 @@ package za.co.sindi.ai.mcp.shared;
 
 import za.co.sindi.ai.mcp.schema.Notification;
 import za.co.sindi.ai.mcp.schema.ProgressNotification;
+import za.co.sindi.ai.mcp.schema.ProgressToken;
 
 /**
  * @author Buhake Sindi

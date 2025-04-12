@@ -12,7 +12,7 @@ import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
 import jakarta.json.stream.JsonParser.Event;
-import za.co.sindi.ai.mcp.shared.ProgressToken;
+import za.co.sindi.ai.mcp.schema.ProgressToken;
 
 /**
  * @author Buhake Sindi

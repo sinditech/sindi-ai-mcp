@@ -11,7 +11,7 @@ import jakarta.json.bind.serializer.JsonbSerializer;
 import jakarta.json.bind.serializer.SerializationContext;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.json.stream.JsonParser;
-import za.co.sindi.ai.mcp.shared.RequestId;
+import za.co.sindi.ai.mcp.schema.RequestId;
 
 /**
  * @author Buhake Sindi

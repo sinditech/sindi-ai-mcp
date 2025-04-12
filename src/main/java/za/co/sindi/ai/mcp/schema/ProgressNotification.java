@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.ProgressNotification.ProgressNotificationParameters;
-import za.co.sindi.ai.mcp.shared.ProgressToken;
 
 /**
  * @author Buhake Sindi

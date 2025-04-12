@@ -1,16 +1,16 @@
 /**
  * 
  */
-package za.co.sindi.ai.mcp.shared;
+package za.co.sindi.ai.mcp.schema;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * @author Buhake Sindi
- * @since 13 March 2025
+ * @since 12 April 2025
  */
-public final class ProgressToken implements Serializable {
+public final class RequestId implements Serializable {
 
 	private final Class<?> type;
 	private final Object value;
@@ -19,7 +19,7 @@ public final class ProgressToken implements Serializable {
 	 * @param type
 	 * @param value
 	 */
-	private ProgressToken(Class<?> type, Object value) {
+	private RequestId(Class<?> type, Object value) {
 		super();
 		this.type = type;
 		this.value = Objects.requireNonNull(value, "A non-null value is required.");
@@ -52,7 +52,7 @@ public final class ProgressToken implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ProgressToken other = (ProgressToken) obj;
+		RequestId other = (RequestId) obj;
 		return Objects.equals(type, other.type) && Objects.equals(value, other.value);
 	}
 
@@ -61,15 +61,15 @@ public final class ProgressToken implements Serializable {
 		return String.valueOf(value);
 	}
 
-	public static ProgressToken of(final String value) {
-		return new ProgressToken(String.class, value);
+	public static RequestId of(final String value) {
+		return new RequestId(String.class, value);
 	}
 	
-	public static ProgressToken of(final int value) {
-		return new ProgressToken(int.class, value);
+	public static RequestId of(final int value) {
+		return new RequestId(int.class, value);
 	}
 	
-	public static ProgressToken of(final long value) {
-		return new ProgressToken(long.class, value);
+	public static RequestId of(final long value) {
+		return new RequestId(long.class, value);
 	}
 }
