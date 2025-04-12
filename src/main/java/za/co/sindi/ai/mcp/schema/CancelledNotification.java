@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.CancelledNotification.CancelledNotificationParameters;
+import za.co.sindi.ai.mcp.shared.RequestId;
 
 /**
  * @author Buhake Sindi
@@ -33,7 +34,7 @@ public final class CancelledNotification extends BaseNotification implements Par
 	public static final class CancelledNotificationParameters implements Serializable {
 		
 		@JsonbProperty
-		private long requestId;
+		private RequestId requestId;
 		
 		@JsonbProperty
 		private String reason;
@@ -41,14 +42,14 @@ public final class CancelledNotification extends BaseNotification implements Par
 		/**
 		 * @return the requestId
 		 */
-		public long getRequestId() {
+		public RequestId getRequestId() {
 			return requestId;
 		}
 
 		/**
 		 * @param requestId the requestId to set
 		 */
-		public void setRequestId(long requestId) {
+		public void setRequestId(RequestId requestId) {
 			this.requestId = requestId;
 		}
 

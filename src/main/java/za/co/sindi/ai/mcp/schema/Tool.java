@@ -68,7 +68,7 @@ public class Tool implements Serializable {
 		private String type;
 		
 		@JsonbProperty
-		private Map<String, Object> properties;
+		private Map<String, PropertyInfo> properties;
 		
 		@JsonbProperty
 		private String[] required;
@@ -90,14 +90,14 @@ public class Tool implements Serializable {
 		/**
 		 * @return the properties
 		 */
-		public Map<String, Object> getProperties() {
+		public Map<String, PropertyInfo> getProperties() {
 			return properties;
 		}
 
 		/**
 		 * @param properties the properties to set
 		 */
-		public void setProperties(Map<String, Object> properties) {
+		public void setProperties(Map<String, PropertyInfo> properties) {
 			this.properties = properties;
 		}
 
@@ -113,6 +113,61 @@ public class Tool implements Serializable {
 		 */
 		public void setRequired(String[] required) {
 			this.required = required;
+		}
+		
+		public static class PropertyInfo {
+			
+			@JsonbProperty
+			private String type;
+			
+			@JsonbProperty
+			private String description;
+
+			/**
+			 * 
+			 */
+			public PropertyInfo() {
+				super();
+				// TODO Auto-generated constructor stub
+			}
+
+			/**
+			 * @param type
+			 * @param description
+			 */
+			public PropertyInfo(String type, String description) {
+				super();
+				this.type = type;
+				this.description = description;
+			}
+
+			/**
+			 * @return the type
+			 */
+			public String getType() {
+				return type;
+			}
+
+			/**
+			 * @param type the type to set
+			 */
+			public void setType(String type) {
+				this.type = type;
+			}
+
+			/**
+			 * @return the description
+			 */
+			public String getDescription() {
+				return description;
+			}
+
+			/**
+			 * @param description the description to set
+			 */
+			public void setDescription(String description) {
+				this.description = description;
+			}
 		}
 	}
 }

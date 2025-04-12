@@ -3,6 +3,7 @@ package za.co.sindi.ai.mcp.schema;
 import java.io.Serializable;
 
 import jakarta.json.bind.annotation.JsonbProperty;
+import za.co.sindi.ai.mcp.shared.RequestId;
 
 /**
  * @author Buhake Sindi
@@ -11,7 +12,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
 public final class JSONRPCError extends JSONRPCMessage {
 	
 	@JsonbProperty
-	private long id;
+	private RequestId id;
 	
 	@JsonbProperty
 	private Error error;
@@ -19,14 +20,14 @@ public final class JSONRPCError extends JSONRPCMessage {
 	/**
 	 * @return the id
 	 */
-	public long getId() {
+	public RequestId getId() {
 		return id;
 	}
 
 	/**
 	 * @param id the id to set
 	 */
-	public void setId(long id) {
+	public void setId(RequestId id) {
 		this.id = id;
 	}
 

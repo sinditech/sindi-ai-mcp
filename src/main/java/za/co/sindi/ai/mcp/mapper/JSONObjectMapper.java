@@ -28,7 +28,9 @@ public class JSONObjectMapper implements ObjectMapper {
 			config.withAdapters(new JsonJSONRPCVersionAdapter(),
 								new JsonLoggingLevelAdapter(),
 								new JsonRoleAdapter(),
-								new JsonProtocolVersionAdapter());
+								new JsonProtocolVersionAdapter())
+				  .withSerializers(new JsonRequestIdSerialization(), new JsonProgressTokenSerialization())
+				  .withDeserializers(new JsonRequestIdSerialization(), new JsonProgressTokenSerialization());
 		}
 		return config;
 	}

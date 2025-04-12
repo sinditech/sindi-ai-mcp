@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.ProgressNotification.ProgressNotificationParameters;
+import za.co.sindi.ai.mcp.shared.ProgressToken;
 
 /**
  * @author Buhake Sindi
@@ -33,7 +34,7 @@ public final class ProgressNotification extends BaseNotification implements Para
 	public static final class ProgressNotificationParameters implements Serializable {
 		
 		@JsonbProperty
-		private String progressToken;
+		private ProgressToken progressToken;
 		
 		@JsonbProperty
 		private long progress;
@@ -44,14 +45,14 @@ public final class ProgressNotification extends BaseNotification implements Para
 		/**
 		 * @return the progressToken
 		 */
-		public String getProgressToken() {
+		public ProgressToken getProgressToken() {
 			return progressToken;
 		}
 
 		/**
 		 * @param progressToken the progressToken to set
 		 */
-		public void setProgressToken(String progressToken) {
+		public void setProgressToken(ProgressToken progressToken) {
 			this.progressToken = progressToken;
 		}
 

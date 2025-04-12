@@ -17,5 +17,5 @@ public abstract class ProgressHandler implements NotificationHandler {
 		handle(progressNotification.getParameters().getProgressToken(), progressNotification.getParameters().getProgress(), progressNotification.getParameters().getTotal());
 	}
 	
-	public abstract void handle(final String progressToken, final long progress, final Long total);
+	public abstract void handle(final ProgressToken progressToken, final long progress, final Long total);
 }

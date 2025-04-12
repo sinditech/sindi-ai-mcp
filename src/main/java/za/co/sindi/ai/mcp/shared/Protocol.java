@@ -1,6 +1,7 @@
 package za.co.sindi.ai.mcp.shared;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +28,7 @@ import za.co.sindi.ai.mcp.schema.JSONRPCVersion;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.schema.Notification;
 import za.co.sindi.ai.mcp.schema.PingRequest;
+import za.co.sindi.ai.mcp.schema.ProgressNotification;
 import za.co.sindi.ai.mcp.schema.Request;
 import za.co.sindi.ai.mcp.schema.Result;
 import za.co.sindi.ai.mcp.schema.Schema;
@@ -52,10 +54,10 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	private final ConcurrentHashMap<String, NotificationHandler> notificationHandlers = new ConcurrentHashMap<>();
 	
 	/** Map of response handlers keyed by request id */
-	private final ConcurrentHashMap<Long, ResponseHandler> responseHandlers = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<RequestId, ResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 	
 	/** Map of progress handlers keyed by request id */
-	private final ConcurrentHashMap<Long, ProgressHandler> progressHandlers = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<RequestId, ProgressHandler> progressHandlers = new ConcurrentHashMap<>();
 	
 	private Executor executor = Executors.newVirtualThreadPerTaskExecutor();
 	
@@ -72,12 +74,15 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	/**
 	 * @param transport
 	 */
+	@SuppressWarnings("unused")
 	protected Protocol(T transport) {
 		super();
 		this.transport = Objects.requireNonNull(transport, "A MCP Transport is required.");
 		setRequestTimeout(DEFAULT_REQUEST_TIMEOUT_MSEC);
 		
-		requestHandlers.put(PingRequest.METHOD_PING, request -> Schema.EMPTY_RESULT);
+		addNotificationHandler(ProgressNotification.METHOD_NOTIFICATION_PROGRESS, notification -> onProgress(MCPSchema.toNotification(notification)));
+		
+		addRequestHandler(PingRequest.METHOD_PING, request -> Schema.EMPTY_RESULT);
 	}
 
 	/**
@@ -162,13 +167,13 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			public void onMessage(JSONRPCMessage message) {
 				// TODO Auto-generated method stub
 				if (message instanceof JSONRPCRequest request) {
-					onJSONRPCRequest(request);
+					onRequest(request);
 				} else if (message instanceof JSONRPCNotification notification) {
-					onJSONRPCNotification(notification);
+					onNotification(notification);
 				} else if (message instanceof JSONRPCResult result) {
-					onJSONRPCResponse(result, null);
+					onResponse(result, null);
 				} else if (message instanceof JSONRPCError error) {
-					onJSONRPCResponse(null, error);
+					onResponse(null, error);
 				}
 			}
 			
@@ -199,17 +204,26 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	
 	@SuppressWarnings("hiding")
 	public <T extends Result> CompletableFuture<T> sendRequest(REQ request, Class<T> resultType) {
+		return sendRequest(request, resultType, null);
+	}
+	
+	@SuppressWarnings("hiding")
+	public <T extends Result> CompletableFuture<T> sendRequest(REQ request, Class<T> resultType, final ProgressHandler progressHandler) {
 		CompletableFuture<T> cf = new CompletableFuture<>();
 		JSONRPCRequest jsonRpcRequest = MCPSchema.toJSONRPCRequest(request);
 		LOGGER.info("Sending request: " + jsonRpcRequest.getMethod());
 		
 		long messageId = requestId.getAndIncrement();
-		jsonRpcRequest.setId(messageId);
+		jsonRpcRequest.setId(RequestId.of(messageId));
 		
 		//TODO: Handle progress?
+		if (progressHandler != null) {
+			progressHandlers.put(jsonRpcRequest.getId(), progressHandler);
+			jsonRpcRequest.getParams().put("_meta", Map.of("progressToken", ProgressToken.of(messageId)));
+		}
 		
 		//continue...
-		responseHandlers.put(messageId, new ResponseHandler() {
+		responseHandlers.put(jsonRpcRequest.getId(), new ResponseHandler() {
 			
 			/* (non-Javadoc)
 			 * @see za.co.sindi.ai.mcp.shared.ResponseHandler#handle(java.lang.Throwable)
@@ -239,12 +253,12 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		});
 		
 		Consumer<Throwable> cancel = throwable -> {
-			responseHandlers.remove(messageId);
-	        progressHandlers.remove(messageId);
+			responseHandlers.remove(jsonRpcRequest.getId());
+	        progressHandlers.remove(jsonRpcRequest.getId());
 	        
 	        CancelledNotification cancelledNotification = new CancelledNotification();
 	        CancelledNotificationParameters parameters = new CancelledNotificationParameters();
-	        parameters.setRequestId(messageId);
+	        parameters.setRequestId(jsonRpcRequest.getId());
 	        parameters.setReason(Strings.isNullOrEmpty(throwable.getMessage()) ? "Unknown": throwable.getMessage());
 	        cancelledNotification.setParameters(parameters);
 	        transport.send(MCPSchema.toJSONRPCNotification(cancelledNotification));
@@ -293,7 +307,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		responseHandlers.clear();
 	}
 	
-	private void onJSONRPCRequest(JSONRPCRequest request) {
+	private void onRequest(JSONRPCRequest request) {
 		LOGGER.info("Received request: " + request.getMethod() + ", ID: " + request.getId());
 		RequestHandler<? extends Result> handler = requestHandlers.containsKey(request.getMethod()) ? requestHandlers.get(request.getMethod()) : fallbackRequestHandler;
 		
@@ -325,7 +339,26 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		}
 	}
 	
-	private void onJSONRPCNotification(JSONRPCNotification notification) {
+	private void onProgress(ProgressNotification notification) {
+		Object progressToken = notification.getParameters().getProgressToken().getValue();
+		RequestId id = null;
+		if (progressToken instanceof String)
+			RequestId.of((String)progressToken);
+		else if (int.class.equals(progressToken.getClass()))
+			RequestId.of((int)progressToken);
+		else if (long.class.equals(progressToken.getClass()))
+			RequestId.of((long)progressToken);
+		
+		ProgressHandler handler = progressHandlers.get(id);
+		if (handler == null) {
+			onError(new IllegalStateException("Received a progress notification for an unknown token: " + String.valueOf(progressToken)));
+			return ;
+		}
+		
+		handler.handle(notification);
+	}
+	
+	private void onNotification(JSONRPCNotification notification) {
 		LOGGER.info("Received notification: " + notification.getMethod());
 		NotificationHandler handler = notificationHandlers.containsKey(notification.getMethod()) ? notificationHandlers.get(notification.getMethod()) : fallbackNotificationHandler;
 		if (handler == null) {
@@ -341,16 +374,16 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		}
 	}
 	
-	private void onJSONRPCResponse(JSONRPCResult jsonRpcResult, JSONRPCError jsonRpcError) {
-		long responseId = jsonRpcResult != null ? jsonRpcResult.getId() : jsonRpcError.getId();
-		ResponseHandler handler = responseHandlers.get(responseId);
+	private void onResponse(JSONRPCResult jsonRpcResult, JSONRPCError jsonRpcError) {
+		RequestId id = jsonRpcResult != null ? jsonRpcResult.getId() : jsonRpcError.getId();
+		ResponseHandler handler = responseHandlers.get(id);
 		if (handler == null) {
-			Protocol.this.onError(new TransportException("Received a response for an unknown message ID: " + responseId));
+			Protocol.this.onError(new TransportException("Received a response for an unknown message ID: " + id));
 			return;
 		}
 		
-		responseHandlers.remove(responseId);
-		progressHandlers.remove(responseId);
+		responseHandlers.remove(id);
+		progressHandlers.remove(id);
 		
 		if (jsonRpcResult != null) {
 			handler.handle(jsonRpcResult);
@@ -359,7 +392,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		}
 	}
 	
-	private CompletableFuture<Void> sendResult(final long requestId, final Result result) {
+	private CompletableFuture<Void> sendResult(final RequestId requestId, final Result result) {
 		JSONRPCResult jsonRPCResult = new JSONRPCResult();
 		jsonRPCResult.setJsonrpc(JSONRPCVersion.getLatest());
 		jsonRPCResult.setId(requestId);
@@ -368,7 +401,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		return transport.sendAsync(jsonRPCResult);
 	}
 	
-	private CompletableFuture<Void> sendError(final long id, final int errorCode, final String message) {
+	private CompletableFuture<Void> sendError(final RequestId id, final int errorCode, final String message) {
 		JSONRPCError jsonRPCError = new JSONRPCError();
 		jsonRPCError.setJsonrpc(JSONRPCVersion.getLatest());
 		jsonRPCError.setId(id);
