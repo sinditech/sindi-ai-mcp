@@ -47,31 +47,43 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 	
 	private String sseUrl;
 	
+	private String accessToken;
+	
 	private HttpClient httpClient;
 	
 	private EventSource eventSource;
 	
 	/**
 	 * @param baseUrl
-	 * @param mapper
 	 */
 	public SSEClientTransport(String baseUrl) {
-		this(baseUrl, baseUrl + SSE_ENDPOINT);
+		this(baseUrl, null);
+	}
+	
+	/**
+	 * @param baseUrl
+	 * @param accessToken
+	 */
+	public SSEClientTransport(String baseUrl, String accessToken) {
+		this(baseUrl, baseUrl + SSE_ENDPOINT, accessToken);
 	}
 
 	/**
 	 * @param baseUrl
 	 * @param sseUrl
+	 * @param accessToken
 	 */
-	public SSEClientTransport(final String baseUrl, final String sseUrl) {
+	public SSEClientTransport(final String baseUrl, final String sseUrl, final String accessToken) {
 		super();
 		this.baseUrl = baseUrl;
 		this.sseUrl = sseUrl;
+		this.accessToken = accessToken;
 	}
 
 	/* (non-Javadoc)
 	 * @see za.co.sindi.ai.mcp.shared.Transport#startAsync()
 	 */
+	@SuppressWarnings("resource")
 	@Override
 	public CompletableFuture<Void> startAsync() {
 		// TODO Auto-generated method stub
@@ -87,7 +99,7 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 		
 		CompletableFuture<Void> future = new CompletableFuture<>();
 		connectionFuture.set(future);
-		eventSource = new EventSource(sseUrl, httpClient)
+		eventSource = new EventSource(sseUrl, httpClient, builder -> applyCommonHeaders(builder))
 						.onMessage(new EventHandler() {
 							
 								/* (non-Javadoc)
@@ -150,13 +162,13 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 		}
 		
 		String jsonText = MCPSchema.serializeJSONRPCMessage(message);   //getMapper().map(message);
-		HttpRequest request = HttpRequest.newBuilder()
+		HttpRequest.Builder builder = HttpRequest.newBuilder()
 				.uri(URI.create(this.baseUrl + endpoint))
 				.header("Content-Type", "application/json")
-				.POST(HttpRequest.BodyPublishers.ofString(jsonText))
-				.build();
+				.POST(HttpRequest.BodyPublishers.ofString(jsonText));
+		applyCommonHeaders(builder);
 		
-		return httpClient.sendAsync(request, BodyHandlers.ofString()).thenAccept(response -> {
+		return httpClient.sendAsync(builder.build(), BodyHandlers.ofString()).thenAccept(response -> {
 			if (response.statusCode() != 200 && response.statusCode() != 201 && response.statusCode() != 202
 					&& response.statusCode() != 206) {
 				String body = response.body();
@@ -182,5 +194,9 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 		}
 		
 		super.close();
+	}
+	
+	private void applyCommonHeaders(final HttpRequest.Builder builder) {
+		if (!Strings.isNullOrEmpty(accessToken)) builder.header("Authorization", "Bearer " + accessToken);
 	}
 }

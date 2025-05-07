@@ -8,7 +8,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public sealed abstract class JSONRPCMessage implements Serializable permits JSONRPCRequest, JSONRPCNotification, JSONRPCError, JSONRPCResult {
+public sealed abstract class JSONRPCMessage implements Serializable permits JSONRPCRequest, JSONRPCNotification, JSONRPCResponse {
 
 	@JsonbProperty
 	private JSONRPCVersion jsonrpc;

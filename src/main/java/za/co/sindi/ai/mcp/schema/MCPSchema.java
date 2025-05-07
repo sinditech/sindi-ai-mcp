@@ -2,6 +2,7 @@ package za.co.sindi.ai.mcp.schema;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -58,12 +59,16 @@ public final class MCPSchema {
 		throw new AssertionError("Private constructor.");
 	}
 	
-	public static String serializeJSONRPCMessage(JSONRPCMessage message) {
-		return serializeJSONRPCMessage(MAPPER, message);
+	public static String serializeJSONRPCMessage(JSONRPCMessage... messages) {
+		return serializeJSONRPCMessage(MAPPER, messages);
 	}
 	
-	public static String serializeJSONRPCMessage(ObjectMapper objectMapper, JSONRPCMessage message) {
-		return objectMapper.map(message);
+	public static String serializeJSONRPCMessage(ObjectMapper objectMapper, JSONRPCMessage... messages) {
+		if (messages.length == 1) {
+			objectMapper.map(messages[0]);
+		}
+		
+		return objectMapper.map(messages);
 	}
 	
 	public static JSONRPCMessage deserializeJSONRPCMessage(String jsonText) {
@@ -89,6 +94,30 @@ public final class MCPSchema {
 		}
 
 		throw new IllegalArgumentException("Cannot deserialize JSONRPCMessage: " + jsonText);
+	}
+	
+	public static JSONRPCMessage[] deserializeJSONRPCMessages(String jsonText) {
+		return deserializeJSONRPCMessages(MAPPER, jsonText);
+	}
+	
+	public static JSONRPCMessage[] deserializeJSONRPCMessages(ObjectMapper objectMapper, String jsonText) {
+		JSONRPCMessage[] result = null;
+		if (jsonText.trim().startsWith("[") && jsonText.trim().endsWith("]")) {
+			List<?> objectList = objectMapper.map(jsonText, List.class);
+			
+			// Create array to hold the individual JSON strings
+			result = new JSONRPCMessage[objectList.size()];
+	        
+			// Convert each object back to its JSON string representation
+	        for (int i = 0; i < objectList.size(); i++) {
+	            result[i] = deserializeJSONRPCMessage(objectMapper, objectMapper.map(objectList.get(i)));
+	        }
+		} else {		
+			result = new JSONRPCMessage[1];
+			result[0] = deserializeJSONRPCMessage(objectMapper, jsonText);
+		}
+		
+		return result;
 	}
 	
 	public static <T extends Request> T toRequest(JSONRPCRequest request) {

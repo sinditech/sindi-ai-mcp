@@ -48,4 +48,8 @@ public interface Transport extends AutoCloseable {
 	}
 	
 	public CompletableFuture<Void> sendAsync(final JSONRPCMessage message);
+	
+	default String getSessionId() {
+		return null;
+	}
 }

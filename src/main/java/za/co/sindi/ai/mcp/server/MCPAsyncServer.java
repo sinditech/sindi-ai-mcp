@@ -7,7 +7,6 @@ import za.co.sindi.ai.mcp.schema.CreateMessageRequest.CreateMessageRequestParame
 import za.co.sindi.ai.mcp.schema.CreateMessageResult;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
 import za.co.sindi.ai.mcp.schema.ListResourceTemplatesResult;
-import za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters;
 import za.co.sindi.ai.mcp.schema.Prompt;
 import za.co.sindi.ai.mcp.schema.PromptArgument;
 import za.co.sindi.ai.mcp.schema.ReadResourceResult;
@@ -31,16 +30,6 @@ public interface MCPAsyncServer {
 	public CompletableFuture<CreateMessageResult> createMessageAsync(final CreateMessageRequestParameters parameters);
 	
 	public CompletableFuture<Root[]> listRootsAsync();
-	
-	public CompletableFuture<Void> sendLoggingMessageAsync(final LoggingMessageNotificationParameters parameters);
-	
-	public CompletableFuture<Void> sendResourceUpdatedAsync(final String uri);
-	
-	public CompletableFuture<Void> sendResourceListChangedAsync();
-	
-	public CompletableFuture<Void> sendToolListChangedAsync();
-	
-	public CompletableFuture<Void> sendPromptListChangedAsync();
 	
 	default CompletableFuture<Void> addToolAsync(final String name, final String description, final InputSchema inputSchema, final RequestHandler<CallToolResult> handler) {
 		Tool tool = new Tool();

@@ -2,7 +2,6 @@ package za.co.sindi.ai.mcp.shared;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -23,6 +22,7 @@ import za.co.sindi.ai.mcp.schema.JSONRPCError.Error;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.schema.JSONRPCNotification;
 import za.co.sindi.ai.mcp.schema.JSONRPCRequest;
+import za.co.sindi.ai.mcp.schema.JSONRPCResponse;
 import za.co.sindi.ai.mcp.schema.JSONRPCResult;
 import za.co.sindi.ai.mcp.schema.JSONRPCVersion;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
@@ -35,6 +35,7 @@ import za.co.sindi.ai.mcp.schema.RequestId;
 import za.co.sindi.ai.mcp.schema.Result;
 import za.co.sindi.ai.mcp.schema.Schema;
 import za.co.sindi.ai.mcp.server.Server;
+import za.co.sindi.commons.utils.Preconditions;
 import za.co.sindi.commons.utils.Strings;
 
 /**
@@ -76,15 +77,13 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	/**
 	 * @param transport
 	 */
-	@SuppressWarnings("unused")
-	protected Protocol(T transport) {
+	protected Protocol() {
 		super();
-		this.transport = Objects.requireNonNull(transport, "A MCP Transport is required.");
 		setRequestTimeout(DEFAULT_REQUEST_TIMEOUT_MSEC);
 		
 		addNotificationHandler(ProgressNotification.METHOD_NOTIFICATION_PROGRESS, notification -> onProgress(MCPSchema.toNotification(notification)));
 		
-		addRequestHandler(PingRequest.METHOD_PING, request -> Schema.EMPTY_RESULT);
+		addRequestHandler(PingRequest.METHOD_PING, (request, extra) ->  Schema.EMPTY_RESULT);
 	}
 
 	/**
@@ -94,6 +93,13 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		return transport;
 	}
 	
+	/**
+	 * @param transport the transport to set
+	 */
+	public void setTransport(T transport) {
+		this.transport = transport;
+	}
+
 	/**
 	 * @return the executor
 	 */
@@ -149,7 +155,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	@Override
 	public void close() throws Exception {
 		// TODO Auto-generated method stub
-		transport.close();
+		if (transport != null) transport.close();
 	}
 	
 	public void closeQuietly() {
@@ -163,6 +169,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	public void onError(final Throwable throwable) {}
 	
 	public CompletableFuture<Void> connect() {
+		Preconditions.checkState(transport != null, "A MCP Transport is required.");
 		transport.setMessageHandler(new JSONRPCMessageHandler() {
 			
 			@Override
@@ -172,10 +179,8 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 					onRequest(request);
 				} else if (message instanceof JSONRPCNotification notification) {
 					onNotification(notification);
-				} else if (message instanceof JSONRPCResult result) {
-					onResponse(result, null);
-				} else if (message instanceof JSONRPCError error) {
-					onResponse(null, error);
+				} else if (message instanceof JSONRPCResponse response) {
+					onResponse(response);
 				}
 			}
 			
@@ -249,7 +254,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 				try {
 					cf.complete(MCPSchema.toResult(result, resultType));
 				} catch (Throwable cause) {
-					cf.completeExceptionally(cause);
+					handle(cause);
 				}
 			}
 		});
@@ -315,14 +320,15 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		
 		if (handler == null) {
 			LOGGER.info("No handler found for request: " + request.getMethod());
-			sendError(request.getId(), ErrorCodes.METHOD_NOT_FOUND, "Server does not support " + request.getMethod())
+			sendError(request.getId(), ErrorCodes.METHOD_NOT_FOUND, "Method not found: " + request.getMethod())
 			.exceptionally(throwable -> {
 				LOGGER.severe("Error sending method not found response.");
 				Protocol.this.onError(throwable);
 				return null;
 			});
 		} else {
-			Result result = handler.handle(request);
+			RequestHandlerExtra extra = new RequestHandlerExtra();
+			Result result = handler.handle(request, extra);
 			LOGGER.info("Request handled successfully: " + request.getMethod() + ", ID: " + request.getId());
 			sendResult(request.getId(), result)
 			.handle((response, throwable) -> {
@@ -376,20 +382,19 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		}
 	}
 	
-	private void onResponse(JSONRPCResult jsonRpcResult, JSONRPCError jsonRpcError) {
-		RequestId id = jsonRpcResult != null ? jsonRpcResult.getId() : jsonRpcError.getId();
-		ResponseHandler handler = responseHandlers.get(id);
+	private void onResponse(JSONRPCResponse jsonRpcResponse) {
+		ResponseHandler handler = responseHandlers.get(jsonRpcResponse.getId());
 		if (handler == null) {
-			Protocol.this.onError(new TransportException("Received a response for an unknown message ID: " + id));
+			Protocol.this.onError(new TransportException("Received a response for an unknown message ID: " + jsonRpcResponse.getId()));
 			return;
 		}
 		
-		responseHandlers.remove(id);
-		progressHandlers.remove(id);
+		responseHandlers.remove(jsonRpcResponse.getId());
+		progressHandlers.remove(jsonRpcResponse.getId());
 		
-		if (jsonRpcResult != null) {
+		if (jsonRpcResponse instanceof JSONRPCResult jsonRpcResult) {
 			handler.handle(jsonRpcResult);
-		} else if (jsonRpcError != null) {
+		} else if (jsonRpcResponse instanceof JSONRPCError jsonRpcError) {
 			handler.handle(jsonRpcError.getError());
 		}
 	}
@@ -404,12 +409,17 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	}
 	
 	private CompletableFuture<Void> sendError(final RequestId id, final int errorCode, final String message) {
+		return sendError(id, errorCode, message, null);
+	}
+	
+	private CompletableFuture<Void> sendError(final RequestId id, final int errorCode, final String message, final Object data) {
 		JSONRPCError jsonRPCError = new JSONRPCError();
 		jsonRPCError.setJsonrpc(JSONRPCVersion.getLatest());
 		jsonRPCError.setId(id);
 		Error error = new Error();
 		error.setCode(errorCode);
 		error.setMessage(message);
+		error.setData(data);
 		jsonRPCError.setError(error);
 		
 		return transport.sendAsync(jsonRPCError);

@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.util.Map;
-
 /**
  * @author Buhake Sindi
  * @since 08 February 2025

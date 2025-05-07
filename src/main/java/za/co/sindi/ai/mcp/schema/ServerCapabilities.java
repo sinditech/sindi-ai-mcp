@@ -18,6 +18,9 @@ public class ServerCapabilities implements Serializable {
 	public Logging logging;
 	
 	@JsonbProperty
+	private Completions completions;
+	
+	@JsonbProperty
 	public Prompts prompts;
 	
 	@JsonbProperty
@@ -33,27 +36,34 @@ public class ServerCapabilities implements Serializable {
 		super();
 		//TODO Auto-generated constructor stub
 	}
-
+	
 	/**
 	 * @param experimental
 	 * @param logging
+	 * @param completions
 	 * @param prompts
 	 * @param resources
 	 * @param tools
 	 */
-	public ServerCapabilities(Map<String, Object> experimental, Logging logging, Prompts prompts, Resources resources,
-			Tools tools) {
+	public ServerCapabilities(Map<String, Object> experimental, Logging logging, Completions completions,
+			Prompts prompts, Resources resources, Tools tools) {
 		super();
 		this.experimental = experimental;
 		this.logging = logging;
+		this.completions = completions;
 		this.prompts = prompts;
 		this.resources = resources;
 		this.tools = tools;
 	}
-	
+
+	/**
+	 * 
+	 * @param other
+	 */
 	private ServerCapabilities(final ServerCapabilities other) {
 		super();
 		this.experimental = other.experimental;
+		this.completions = other.completions;
 		this.logging = other.logging;
 		this.prompts = other.prompts;
 		this.resources = other.resources;
@@ -86,6 +96,20 @@ public class ServerCapabilities implements Serializable {
 	 */
 	public void setLogging(Logging logging) {
 		this.logging = logging;
+	}
+
+	/**
+	 * @return the completions
+	 */
+	public Completions getCompletions() {
+		return completions;
+	}
+
+	/**
+	 * @param completions the completions to set
+	 */
+	public void setCompletions(Completions completions) {
+		this.completions = completions;
 	}
 
 	/**
@@ -131,6 +155,10 @@ public class ServerCapabilities implements Serializable {
 	}
 
 	public static class Logging implements Serializable {
+		
+	}
+	
+	public static class Completions implements Serializable {
 		
 	}
 	
@@ -222,6 +250,11 @@ public class ServerCapabilities implements Serializable {
 		
 		public Builder logging() {
 			capabilities.setLogging(new Logging());
+			return this;
+		}
+		
+		public Builder completions() {
+			capabilities.setCompletions(new Completions());
 			return this;
 		}
 		

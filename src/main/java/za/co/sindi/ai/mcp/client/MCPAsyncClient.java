@@ -54,10 +54,7 @@ public interface MCPAsyncClient {
 	
 	public CompletableFuture<Completion> completeAsync(final Reference reference, final Argument argument);
 	
-	public CompletableFuture<Void> sendRootListChangedAsync();
-	
 	public CompletableFuture<Void> addRootAsync(final Root root);
 	
 	public CompletableFuture<Void> removeRootAsync(final String uri);
-	
 }

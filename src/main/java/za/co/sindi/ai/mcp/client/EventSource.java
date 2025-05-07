@@ -7,6 +7,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import za.co.sindi.commons.net.sse.EventHandler;
@@ -44,6 +45,7 @@ public class EventSource implements AutoCloseable {
     
     private final String url;
     private final HttpClient httpClient;
+    private final Consumer<HttpRequest.Builder> requestConsumer;
     
     private EventHandler messageEventHandler;
     
@@ -52,19 +54,19 @@ public class EventSource implements AutoCloseable {
 	 * @param config
 	 */
 	public EventSource(String url) {
-		this(url, HttpClient.newBuilder().build());
+		this(url, HttpClient.newBuilder().build(), builder -> {});
 	}
     
     /**
 	 * @param url
 	 * @param httpClient
-	 * @param connectionFuture
+	 * @param requestConsumer
 	 */
-	public EventSource(String url, HttpClient httpClient) {
+	public EventSource(String url, HttpClient httpClient, Consumer<HttpRequest.Builder> requestConsumer) {
 		super();
 		this.url = url;
 		this.httpClient = httpClient;
-		this.connectionFuture = connectionFuture;
+		this.requestConsumer = requestConsumer;
 	}
 
 	public EventSource onMessage(EventHandler handler) {
@@ -93,18 +95,19 @@ public class EventSource implements AutoCloseable {
             return connectionFuture;
         }
         
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
 				.uri(URI.create(url))
 				.header("Accept", "text/event-stream")
-				.header("Cache-Control", "no-cache")
-				.GET()
-				.build();
+				.header("Cache-Control", "no-cache, no-store")
+				.GET();
+		if (requestConsumer != null) requestConsumer.accept(builder);
         
-        connectionFuture = httpClient.sendAsync(request, BodyHandlers.fromLineSubscriber(new SSEEventSubscriber(messageEventHandler)))
+        connectionFuture = httpClient.sendAsync(builder.build(), BodyHandlers.fromLineSubscriber(new SSEEventSubscriber(messageEventHandler)))
                 .thenAcceptAsync(response -> {
                 	int status = response.statusCode();
         			if (status != 200 && status != 201 && status != 202 && status != 206) {
-        				throw new RuntimeException("Failed to connect to SSE stream. Unexpected status code: " + status);
+//        				throw new RuntimeException("Failed to connect to SSE stream. Unexpected status code: " + status);
+        				throw new SseError("Failed to connect to SSE stream.", status);
         			}
         			
         			readyState = ReadyState.OPEN;
@@ -115,13 +118,12 @@ public class EventSource implements AutoCloseable {
                     return null;
                 });
 
-            return connectionFuture;
+        return connectionFuture;
     }
 
 	/* (non-Javadoc)
 	 * @see java.lang.AutoCloseable#close()
 	 */
-	
 	@Override
 	public void close() throws Exception {
 		// TODO Auto-generated method stub

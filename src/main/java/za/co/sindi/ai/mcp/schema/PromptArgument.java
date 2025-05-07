@@ -20,6 +20,26 @@ public class PromptArgument implements Serializable {
 	private Boolean required;
 
 	/**
+	 * 
+	 */
+	public PromptArgument() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param name
+	 * @param description
+	 * @param required
+	 */
+	public PromptArgument(String name, String description, Boolean required) {
+		super();
+		this.name = name;
+		this.description = description;
+		this.required = required;
+	}
+
+	/**
 	 * @return the name
 	 */
 	public String getName() {

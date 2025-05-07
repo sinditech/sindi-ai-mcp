@@ -12,6 +12,22 @@ public final class TextContent extends Content {
 	private String text;
 
 	/**
+	 * 
+	 */
+	public TextContent() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * @param text
+	 */
+	public TextContent(String text) {
+		super();
+		this.text = text;
+	}
+
+	/**
 	 * @return the text
 	 */
 	public String getText() {

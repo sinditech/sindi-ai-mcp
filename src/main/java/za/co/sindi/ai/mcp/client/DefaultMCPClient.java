@@ -102,7 +102,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 
 	private RequestHandler<ListRootsResult> listRootsRequestHandler() {
 		
-		return request -> {
+		return (request, extra) -> {
 			ListRootsResult result = new ListRootsResult();
 			result.setRoots(roots.values().toArray(new Root[roots.size()]));
 			return result;
@@ -114,9 +114,9 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	// --------------------------
 	private RequestHandler<CreateMessageResult> createMessageRequestHandler() {
 		
-		return request -> {
+		return (request, extra) -> {
 			RequestHandler<CreateMessageResult> handler = samplingHandler.apply(MCPSchema.toRequest(request));
-			return handler.handle(request);
+			return handler.handle(request, extra);
 		};
 	}
 
@@ -355,20 +355,6 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 			return null;
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.client.MCPClient#sendRootListChanged()
-	 */
-	@Override
-	public void sendRootListChanged() {
-		// TODO Auto-generated method stub
-		try {
-			sendRootListChangedAsync().get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			client.onError(e);
-		}
-	}
 	
 	/* (non-Javadoc)
 	 * @see za.co.sindi.ai.mcp.client.MCPClient#addRoot(za.co.sindi.ai.mcp.schema.Root)
@@ -559,19 +545,6 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	}
 
 	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.client.MCPAsyncClient#sendRootListChangedAsync()
-	 */
-	@Override
-	public CompletableFuture<Void> sendRootListChangedAsync() {
-		// TODO Auto-generated method stub
-		if (Boolean.TRUE.equals(client.getClientCapabilities().getRoots().getListChanged())) {
-			return client.sendNotification(new RootsListChangedNotification());
-		}
-		
-		return CompletableFuture.completedFuture(null);
-	}
-
-	/* (non-Javadoc)
 	 * @see za.co.sindi.ai.mcp.client.MCPAsyncClient#addRootAsync(za.co.sindi.ai.mcp.schema.Root)
 	 */
 	@Override
@@ -584,12 +557,9 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 		if (client.getClientCapabilities().getRoots() != null) {
 			roots.put(root.getUri(), root);
 			LOGGER.info("Added root: " + root.getUri() + " (" + root.getName() + ")");
-		
-			if (client.getClientCapabilities().getRoots().getListChanged())
-				return sendRootListChangedAsync();
 		}
 		
-		return CompletableFuture.completedFuture(null);
+		return client.sendRootListChangedAsync();
 	}
 
 	/* (non-Javadoc)
@@ -606,8 +576,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 			Root removed = roots.remove(uri);
 			if (removed != null) {
 				LOGGER.info("Removed root: " + removed.getUri() + " (" + removed.getName() + ")");
-				if (client.getClientCapabilities().getRoots().getListChanged()) 
-					return sendRootListChangedAsync();
+				return client.sendRootListChangedAsync();
 			}
 		}
 		

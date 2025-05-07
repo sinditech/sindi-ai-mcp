@@ -27,23 +27,17 @@ import za.co.sindi.ai.mcp.schema.ListToolsRequest;
 import za.co.sindi.ai.mcp.schema.ListToolsResult;
 import za.co.sindi.ai.mcp.schema.LoggingLevel;
 import za.co.sindi.ai.mcp.schema.LoggingMessageNotification;
-import za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters;
 import za.co.sindi.ai.mcp.schema.PingRequest;
 import za.co.sindi.ai.mcp.schema.Prompt;
-import za.co.sindi.ai.mcp.schema.PromptListChangedNotification;
 import za.co.sindi.ai.mcp.schema.ReadResourceRequest;
 import za.co.sindi.ai.mcp.schema.ReadResourceResult;
 import za.co.sindi.ai.mcp.schema.Resource;
-import za.co.sindi.ai.mcp.schema.ResourceListChangedNotification;
 import za.co.sindi.ai.mcp.schema.ResourceTemplate;
-import za.co.sindi.ai.mcp.schema.ResourceUpdatedNotification;
-import za.co.sindi.ai.mcp.schema.ResourceUpdatedNotification.ResourceUpdatedNotificationParameters;
 import za.co.sindi.ai.mcp.schema.Root;
 import za.co.sindi.ai.mcp.schema.Schema;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.schema.SetLevelRequest;
 import za.co.sindi.ai.mcp.schema.Tool;
-import za.co.sindi.ai.mcp.schema.ToolListChangedNotification;
 import za.co.sindi.ai.mcp.shared.MCPError;
 import za.co.sindi.ai.mcp.shared.RequestHandler;
 import za.co.sindi.ai.mcp.shared.ServerTransport;
@@ -67,8 +61,6 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	private final ConcurrentHashMap<String, RegisteredResourceTemplate> resourceTemplates = new ConcurrentHashMap<>();
 	
 	private final Server server;
-	
-	private LoggingLevel loggingLevel = LoggingLevel.DEBUG;
 	
 	/**
 	 * @param transport
@@ -111,15 +103,17 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 
 	private RequestHandler<EmptyResult> setLoggingLevelRequestHandler() {
 		
-		return request -> {
-			loggingLevel = LoggingLevel.of(String.valueOf(request.getParams().get("level")));
+		return (request, extra) -> {
+			if (server instanceof DefaultServer ds)
+				ds.setLoggingLevel(LoggingLevel.of(String.valueOf(request.getParams().get("level"))));
+			
 			return Schema.EMPTY_RESULT;
 		};
 	}
 	
 	private RequestHandler<ListPromptsResult> listPromptsRequestHandler() {
 		
-		return request -> {
+		return (request, extra) -> {
 			var promptList = prompts.values().stream().map(prompt -> prompt.getPrompt()).toList();
 			ListPromptsResult result = new ListPromptsResult();
 			result.setPrompts(promptList.toArray(new Prompt[promptList.size()]));
@@ -129,20 +123,20 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	
 	private RequestHandler<GetPromptResult> getPromptRequestHandler() {
 		
-		return request -> {
+		return (request, extra) -> {
 			String promptName = String.valueOf(request.getParams().get("name"));
 			RegisteredPrompt registeredPrompt = prompts.get(promptName);
 			if (registeredPrompt == null) {
 				throw new MCPError(ErrorCodes.INVALID_PARAMS ,"Prompt not found: " + promptName);
 			}
 			
-			return registeredPrompt.getMessageProvider().handle(request);
+			return registeredPrompt.getMessageProvider().handle(request, extra);
 		};
 	}
 	
 	private RequestHandler<ListResourcesResult> listResourcesRequestHandler() {
 		
-		return request -> {
+		return (request, extra) -> {
 			var resourceList = resources.values().stream().map(resource -> resource.getResource()).toList();
 			ListResourcesResult result = new ListResourcesResult();
 			result.setResources(resourceList.toArray(new Resource[resourceList.size()]));
@@ -152,19 +146,19 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	
 	private RequestHandler<ReadResourceResult> readResourcesRequestHandler() {
 		
-		return request -> {
+		return (request, extra) -> {
 			String resourceUri = String.valueOf(request.getParams().get("uri"));
 			RegisteredResource registeredResource = resources.get(resourceUri);
 			if (registeredResource == null) {
 				throw new MCPError(ErrorCodes.INVALID_PARAMS ,"Resource with uri '" + resourceUri + "' not found.");
 			}
 			
-			return registeredResource.getReadHandler().handle(request);
+			return registeredResource.getReadHandler().handle(request, extra);
 		};
 	}
 	
 	private RequestHandler<ListResourceTemplatesResult> listResourceTemplatesRequestHandler() {
-		return request -> {
+		return (request, extra) -> {
 			var resourceTemplateList = resourceTemplates.values().stream().map(resourceTemplate -> resourceTemplate.getResourceTemplate()).toList();
 			ListResourceTemplatesResult result = new ListResourceTemplatesResult();
 			result.setResourceTemplates(resourceTemplateList.toArray(new ResourceTemplate[resourceTemplateList.size()]));
@@ -174,7 +168,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	
 	private RequestHandler<ListToolsResult> listToolsRequestHandler() {
 		
-		return request -> {
+		return (request, extra) -> {
 			var toolsList = tools.values().stream().map(tool -> tool.getTool()).toList();
 			ListToolsResult result = new ListToolsResult();
 			result.setTools(toolsList.toArray(new Tool[toolsList.size()]));
@@ -184,14 +178,14 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	}
 	
 	private RequestHandler<CallToolResult> callToolsRequestHandler() {
-		return request -> {
+		return (request, extra) -> {
 			String toolName = String.valueOf(request.getParams().get("name"));
 			RegisteredTool registeredTool = tools.get(toolName);
 			if (registeredTool == null) {
 				throw new MCPError(ErrorCodes.INVALID_PARAMS ,"Tool not found: " + toolName);
 			}
 			
-			return registeredTool.getHandler().handle(request);
+			return registeredTool.getHandler().handle(request, extra);
 		};
 	}
 
@@ -253,76 +247,6 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			// TODO Auto-generated catch block
 			server.onError(e);
 			return null;
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPServer#sendLoggingMessage(za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters)
-	 */
-	@Override
-	public void sendLoggingMessage(LoggingMessageNotificationParameters parameters) {
-		// TODO Auto-generated method stub
-		try {
-			sendLoggingMessageAsync(parameters).get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			server.onError(e);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPServer#sendResourceUpdated(java.lang.String)
-	 */
-	@Override
-	public void sendResourceUpdated(String uri) {
-		// TODO Auto-generated method stub
-		try {
-			sendResourceUpdatedAsync(uri).get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			server.onError(e);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPServer#sendResourceListChanged()
-	 */
-	@Override
-	public void sendResourceListChanged() {
-		// TODO Auto-generated method stub
-		try {
-			sendResourceListChangedAsync().get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			server.onError(e);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPServer#sendToolListChanged()
-	 */
-	@Override
-	public void sendToolListChanged() {
-		// TODO Auto-generated method stub
-		try {
-			sendToolListChangedAsync().get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			server.onError(e);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPServer#sendPromptListChanged()
-	 */
-	@Override
-	public void sendPromptListChanged() {
-		// TODO Auto-generated method stub
-		try {
-			sendPromptListChangedAsync().get();
-		} catch (InterruptedException | ExecutionException e) {
-			// TODO Auto-generated catch block
-			server.onError(e);
 		}
 	}
 	
@@ -456,6 +380,9 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<CreateMessageResult> createMessageAsync(CreateMessageRequestParameters parameters) {
 		// TODO Auto-generated method stub
+		if (server instanceof DefaultServer ds && ds.getClientCapabilities().getSampling() == null) {
+			throw new IllegalStateException("Client does not support sampling (required for " + CreateMessageRequest.METHOD_SAMPLING_CREATE_MESSAGE + ")");
+		}
 		CreateMessageRequest request = new CreateMessageRequest();
 		request.setParameters(parameters);
 		return server.sendRequest(request, CreateMessageResult.class);
@@ -467,58 +394,10 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 	@Override
 	public CompletableFuture<Root[]> listRootsAsync() {
 		// TODO Auto-generated method stub
+		if (server instanceof DefaultServer ds && ds.getClientCapabilities().getRoots() == null) {
+			throw new IllegalStateException("Client does not support listing roots. (required for " + ListRootsRequest.METHOD_ROOTS_LIST + ")");
+		}
 		return server.sendRequest(new ListRootsRequest(), ListRootsResult.class).thenApply(result -> result.getRoots());
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPAsyncServer#sendLoggingMessageAsync(za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters)
-	 */
-	@Override
-	public CompletableFuture<Void> sendLoggingMessageAsync(LoggingMessageNotificationParameters parameters) {
-		// TODO Auto-generated method stub
-		LoggingMessageNotification notification = new LoggingMessageNotification();
-		notification.setParameters(parameters);
-		return server.sendNotification(notification);
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPAsyncServer#sendResourceUpdatedAsync(java.lang.String)
-	 */
-	@Override
-	public CompletableFuture<Void> sendResourceUpdatedAsync(String uri) {
-		// TODO Auto-generated method stub
-		ResourceUpdatedNotification notification = new ResourceUpdatedNotification();
-		ResourceUpdatedNotificationParameters parameters = new ResourceUpdatedNotificationParameters();
-		parameters.setUri(uri);
-		notification.setParameters(parameters);
-		return server.sendNotification(notification);
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPAsyncServer#sendResourceListChangedAsync()
-	 */
-	@Override
-	public CompletableFuture<Void> sendResourceListChangedAsync() {
-		// TODO Auto-generated method stub
-		return server.sendNotification(new ResourceListChangedNotification());
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPAsyncServer#sendToolListChangedAsync()
-	 */
-	@Override
-	public CompletableFuture<Void> sendToolListChangedAsync() {
-		// TODO Auto-generated method stub
-		return server.sendNotification(new ToolListChangedNotification());
-	}
-
-	/* (non-Javadoc)
-	 * @see za.co.sindi.ai.mcp.server.MCPAsyncServer#sendPromptListChangedAsync()
-	 */
-	@Override
-	public CompletableFuture<Void> sendPromptListChangedAsync() {
-		// TODO Auto-generated method stub
-		return server.sendNotification(new PromptListChangedNotification());
 	}
 
 	/* (non-Javadoc)
@@ -535,7 +414,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			LOGGER.info("Registering tool: " + tool.getName());
 			tools.put(tool.getName(), new RegisteredTool(tool, handler));
 			
-			if (server.getServerCapabilities().getTools().getListChanged()) return sendToolListChangedAsync();
+			if (server.getServerCapabilities().getTools().getListChanged()) return server.sendToolListChanged();
 		}
 		
 		return CompletableFuture.completedFuture(null);
@@ -555,7 +434,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			if (removed != null) {
 				LOGGER.info("Removed tool: " + toolName);
 				
-				if (server.getServerCapabilities().getTools().getListChanged()) return sendToolListChangedAsync();
+				if (server.getServerCapabilities().getTools().getListChanged()) return server.sendToolListChanged();
 			}
 		}
 		
@@ -576,7 +455,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			LOGGER.info("Registering Prompt: " + prompt.getName());
 			prompts.put(prompt.getName(), new RegisteredPrompt(prompt, promptProvider));
 			
-			if (server.getServerCapabilities().getPrompts().getListChanged()) return sendPromptListChangedAsync();
+			if (server.getServerCapabilities().getPrompts().getListChanged()) return server.sendPromptListChanged();
 		}
 		
 		return CompletableFuture.completedFuture(null);
@@ -596,7 +475,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			if (removed != null) {
 				LOGGER.info("Removed prompt: " + promptName);
 				
-				if (server.getServerCapabilities().getPrompts().getListChanged()) return sendPromptListChangedAsync();
+				if (server.getServerCapabilities().getPrompts().getListChanged()) return server.sendPromptListChanged();
 			}
 		}
 		
@@ -617,7 +496,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			LOGGER.info("Registering Resource: " + resource.getUri());
 			resources.put(resource.getUri(), new RegisteredResource(resource, readHandler));
 			
-			if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
+			if (server.getServerCapabilities().getResources().getListChanged()) return server.sendResourceListChanged();
 		}
 		
 		return CompletableFuture.completedFuture(null);
@@ -637,7 +516,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			if (removed != null) {
 				LOGGER.info("Removed resource: " + uri);
 				
-				if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
+				if (server.getServerCapabilities().getResources().getListChanged()) return server.sendResourceListChanged();
 			}
 		}
 		
@@ -659,7 +538,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			LOGGER.info("Registering Resource template: " + resourceTemplate.getUriTemplate());
 			resourceTemplates.put(resourceTemplate.getUriTemplate(), new RegisteredResourceTemplate(resourceTemplate, readCallback));
 			
-			if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
+			if (server.getServerCapabilities().getResources().getListChanged()) return server.sendResourceListChanged();
 		}
 		
 		return CompletableFuture.completedFuture(null);
@@ -679,7 +558,7 @@ public class DefaultMCPServer implements MCPServer, MCPAsyncServer {
 			if (removed != null) {
 				LOGGER.info("Removed resource template: " + uriTemplate);
 				
-				if (server.getServerCapabilities().getResources().getListChanged()) return sendResourceListChangedAsync();
+				if (server.getServerCapabilities().getResources().getListChanged()) return server.sendResourceListChanged();
 			}
 		}
 		

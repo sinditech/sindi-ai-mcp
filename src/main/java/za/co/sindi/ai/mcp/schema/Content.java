@@ -12,9 +12,10 @@ import jakarta.json.bind.annotation.JsonbTypeInfo;
 	value = {
 	    @JsonbSubtype(alias="text", type=TextContent.class),
 	    @JsonbSubtype(alias="image", type=ImageContent.class),
+	    @JsonbSubtype(alias="audio", type=AudioContent.class),
 	    @JsonbSubtype(alias="resource", type=EmbeddedResource.class)
 	}
 )
-public sealed abstract class Content extends Annotated permits TextContent, ImageContent, EmbeddedResource {
+public sealed abstract class Content extends Annotated permits TextContent, ImageContent, AudioContent, EmbeddedResource {
 
 }

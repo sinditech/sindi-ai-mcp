@@ -40,6 +40,9 @@ public final class ProgressNotification extends BaseNotification implements Para
 		
 		@JsonbProperty
 		private Long total;
+		
+		@JsonbProperty
+		private String message;
 
 		/**
 		 * @return the progressToken
@@ -81,6 +84,20 @@ public final class ProgressNotification extends BaseNotification implements Para
 		 */
 		public void setTotal(Long total) {
 			this.total = total;
+		}
+
+		/**
+		 * @return the message
+		 */
+		public String getMessage() {
+			return message;
+		}
+
+		/**
+		 * @param message the message to set
+		 */
+		public void setMessage(String message) {
+			this.message = message;
 		}
 	}
 }

@@ -14,6 +14,7 @@ import za.co.sindi.ai.mcp.shared.TransportException;
  * @author Buhake Sindi
  * @since 20 March 2025
  */
+@Deprecated
 public class SSEServerTransport extends AbstractTransport implements ServerTransport {
 	
 	/** Event type for regular messages */
@@ -129,7 +130,7 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	
 	public CompletableFuture<Void> handleMessage(final JSONRPCMessage message) {
 		
-		return CompletableFuture.runAsync(() -> getMessageHandler().onMessage(message));
+		return CompletableFuture.runAsync(() -> getMessageHandler().onMessage(message), getExecutor());
 	}
 
 	/**

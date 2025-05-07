@@ -102,7 +102,7 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 				// TODO Auto-generated catch block
 				throw new TransportException(e);
 			}
-		});
+		}, getExecutor());
 		
 		return future;
 	}

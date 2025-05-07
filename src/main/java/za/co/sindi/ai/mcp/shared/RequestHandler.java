@@ -10,5 +10,5 @@ import za.co.sindi.ai.mcp.schema.Result;
 @FunctionalInterface
 public interface RequestHandler<T extends Result> {
 
-	public T handle(JSONRPCRequest request);
+	public T handle(JSONRPCRequest request, RequestHandlerExtra extra);
 }

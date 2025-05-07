@@ -53,8 +53,6 @@ public interface MCPClient {
 	
 	public Completion complete(final Reference reference, final Argument argument);
 	
-	public void sendRootListChanged();
-	
 	public void addRoot(final Root root);
 	
 	public void removeRoot(final String uri);

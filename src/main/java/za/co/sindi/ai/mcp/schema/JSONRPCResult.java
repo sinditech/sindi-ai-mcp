@@ -6,27 +6,10 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public final class JSONRPCResult extends JSONRPCMessage {
+public final class JSONRPCResult extends JSONRPCResponse {
 
-	@JsonbProperty
-	private RequestId id;
-	
 	@JsonbProperty
 	private Object result;
-
-	/**
-	 * @return the id
-	 */
-	public RequestId getId() {
-		return id;
-	}
-
-	/**
-	 * @param id the id to set
-	 */
-	public void setId(RequestId id) {
-		this.id = id;
-	}
 
 	/**
 	 * @return the result

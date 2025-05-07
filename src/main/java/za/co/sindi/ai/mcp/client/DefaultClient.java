@@ -16,7 +16,8 @@ public class DefaultClient extends Client {
 	 * @param clientInfo
 	 */
 	public DefaultClient(ClientTransport transport, ClientCapabilities clientCapabilities, Implementation clientInfo) {
-		super(transport, clientCapabilities, clientInfo);
+		super(clientCapabilities, clientInfo);
 		//TODO Auto-generated constructor stub
+		setTransport(transport);
 	}
 }

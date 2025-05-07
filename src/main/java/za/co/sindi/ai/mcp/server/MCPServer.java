@@ -5,7 +5,6 @@ import za.co.sindi.ai.mcp.schema.CreateMessageRequest.CreateMessageRequestParame
 import za.co.sindi.ai.mcp.schema.CreateMessageResult;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
 import za.co.sindi.ai.mcp.schema.ListResourceTemplatesResult;
-import za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters;
 import za.co.sindi.ai.mcp.schema.Prompt;
 import za.co.sindi.ai.mcp.schema.PromptArgument;
 import za.co.sindi.ai.mcp.schema.ReadResourceResult;
@@ -29,16 +28,6 @@ public interface MCPServer {
 	public CreateMessageResult createMessage(final CreateMessageRequestParameters parameters);
 	
 	public Root[] listRoots();
-	
-	public void sendLoggingMessage(final LoggingMessageNotificationParameters parameters);
-	
-	public void sendResourceUpdated(final String uri);
-	
-	public void sendResourceListChanged();
-	
-	public void sendToolListChanged();
-	
-	public void sendPromptListChanged();
 	
 	default void addTool(final String name, final String description, final InputSchema inputSchema, final RequestHandler<CallToolResult> handler) {
 		Tool tool = new Tool();

@@ -135,7 +135,7 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 					getMessageHandler().onError(e);
 				}
 			}
-		});
+		}, getExecutor());
 		
 		return future; //future.thenCompose(c -> resultMessageFuture.thenCombine(errorMessageFuture, (result, error) -> result));
 	}

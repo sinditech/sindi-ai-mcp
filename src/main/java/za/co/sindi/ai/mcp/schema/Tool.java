@@ -20,6 +20,9 @@ public class Tool implements Serializable {
 	@JsonbProperty
 	private InputSchema inputSchema;
 	
+	@JsonbProperty
+	private ToolAnnotations annotations;
+	
 	/**
 	 * @return the name
 	 */
@@ -62,13 +65,27 @@ public class Tool implements Serializable {
 		this.inputSchema = inputSchema;
 	}
 
+	/**
+	 * @return the annotations
+	 */
+	public ToolAnnotations getAnnotations() {
+		return annotations;
+	}
+
+	/**
+	 * @param annotations the annotations to set
+	 */
+	public void setAnnotations(ToolAnnotations annotations) {
+		this.annotations = annotations;
+	}
+
 	public static class InputSchema implements Serializable {
 		
 		@JsonbProperty
 		private String type;
 		
 		@JsonbProperty
-		private Map<String, PropertyInfo> properties;
+		private Map<String, PropertySchema> properties;
 		
 		@JsonbProperty
 		private String[] required;
@@ -90,14 +107,14 @@ public class Tool implements Serializable {
 		/**
 		 * @return the properties
 		 */
-		public Map<String, PropertyInfo> getProperties() {
+		public Map<String, PropertySchema> getProperties() {
 			return properties;
 		}
 
 		/**
 		 * @param properties the properties to set
 		 */
-		public void setProperties(Map<String, PropertyInfo> properties) {
+		public void setProperties(Map<String, PropertySchema> properties) {
 			this.properties = properties;
 		}
 
@@ -115,30 +132,31 @@ public class Tool implements Serializable {
 			this.required = required;
 		}
 		
-		public static class PropertyInfo {
+		public static class PropertySchema implements Serializable {
 			
 			@JsonbProperty
 			private String type;
 			
 			@JsonbProperty
 			private String description;
+			
+			@JsonbProperty
+			private PropertySchema items;
 
 			/**
 			 * 
 			 */
-			public PropertyInfo() {
+			public PropertySchema() {
 				super();
 				// TODO Auto-generated constructor stub
 			}
 
 			/**
 			 * @param type
-			 * @param description
 			 */
-			public PropertyInfo(String type, String description) {
+			public PropertySchema(String type) {
 				super();
 				this.type = type;
-				this.description = description;
 			}
 
 			/**
@@ -168,6 +186,108 @@ public class Tool implements Serializable {
 			public void setDescription(String description) {
 				this.description = description;
 			}
+
+			/**
+			 * @return the items
+			 */
+			public PropertySchema getItems() {
+				return items;
+			}
+
+			/**
+			 * @param items the items to set
+			 */
+			public void setItems(PropertySchema items) {
+				this.items = items;
+			}
+		}
+	}
+	
+	public static class ToolAnnotations implements Serializable {
+		
+		@JsonbProperty
+		private String title;
+		
+		@JsonbProperty
+		private Boolean readOnlyHint;
+		
+		@JsonbProperty
+		private Boolean destructiveHint;
+		
+		@JsonbProperty
+		private Boolean idempotentHint;
+		
+		@JsonbProperty
+		private Boolean openWorldHint;
+		
+		/**
+		 * @return the title
+		 */
+		public String getTitle() {
+			return title;
+		}
+		
+		/**
+		 * @param title the title to set
+		 */
+		public void setTitle(String title) {
+			this.title = title;
+		}
+		
+		/**
+		 * @return the readOnlyHint
+		 */
+		public Boolean getReadOnlyHint() {
+			return readOnlyHint;
+		}
+		
+		/**
+		 * @param readOnlyHint the readOnlyHint to set
+		 */
+		public void setReadOnlyHint(Boolean readOnlyHint) {
+			this.readOnlyHint = readOnlyHint;
+		}
+		
+		/**
+		 * @return the destructiveHint
+		 */
+		public Boolean getDestructiveHint() {
+			return destructiveHint;
+		}
+		
+		/**
+		 * @param destructiveHint the destructiveHint to set
+		 */
+		public void setDestructiveHint(Boolean destructiveHint) {
+			this.destructiveHint = destructiveHint;
+		}
+		
+		/**
+		 * @return the idempotentHint
+		 */
+		public Boolean getIdempotentHint() {
+			return idempotentHint;
+		}
+		
+		/**
+		 * @param idempotentHint the idempotentHint to set
+		 */
+		public void setIdempotentHint(Boolean idempotentHint) {
+			this.idempotentHint = idempotentHint;
+		}
+		
+		/**
+		 * @return the openWorldHint
+		 */
+		public Boolean getOpenWorldHint() {
+			return openWorldHint;
+		}
+		
+		/**
+		 * @param openWorldHint the openWorldHint to set
+		 */
+		public void setOpenWorldHint(Boolean openWorldHint) {
+			this.openWorldHint = openWorldHint;
 		}
 	}
 }

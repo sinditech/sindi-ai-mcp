@@ -1,12 +1,14 @@
 package za.co.sindi.ai.mcp.client;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import za.co.sindi.ai.mcp.schema.ClientCapabilities;
 import za.co.sindi.ai.mcp.schema.ClientNotification;
 import za.co.sindi.ai.mcp.schema.ClientRequest;
 import za.co.sindi.ai.mcp.schema.ClientResult;
 import za.co.sindi.ai.mcp.schema.Implementation;
+import za.co.sindi.ai.mcp.schema.RootsListChangedNotification;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.shared.ClientTransport;
 import za.co.sindi.ai.mcp.shared.Protocol;
@@ -24,12 +26,11 @@ public abstract class Client extends Protocol<ClientTransport, ClientRequest, Cl
 	protected String instructions;
 
 	/**
-	 * @param transport
 	 * @param clientCapabilities
 	 * @param clientInfo
 	 */
-	protected Client(ClientTransport transport, ClientCapabilities clientCapabilities, Implementation clientInfo) {
-		super(transport);
+	protected Client(ClientCapabilities clientCapabilities, Implementation clientInfo) {
+		super();
 		this.clientCapabilities = Objects.requireNonNull(clientCapabilities, "A client capabilities is required.");
 		this.clientInfo = Objects.requireNonNull(clientInfo, "A client info is required.");
 	}
@@ -67,5 +68,13 @@ public abstract class Client extends Protocol<ClientTransport, ClientRequest, Cl
 	 */
 	public String getInstructions() {
 		return instructions;
+	}
+	
+	protected CompletableFuture<Void> sendRootListChangedAsync() {
+		if (Boolean.TRUE.equals(getClientCapabilities().getRoots().getListChanged())) {
+			return sendNotification(new RootsListChangedNotification());
+		}
+		
+		return CompletableFuture.completedFuture(null);
 	}
 }
