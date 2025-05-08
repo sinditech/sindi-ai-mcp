@@ -1,14 +1,23 @@
 package za.co.sindi.ai.mcp.test;
 
+import java.util.Map;
+
 import za.co.sindi.ai.mcp.mapper.JSONObjectMapper;
 import za.co.sindi.ai.mcp.mapper.ObjectMapper;
+import za.co.sindi.ai.mcp.schema.CancelledNotification.CancelledNotificationParameters;
 import za.co.sindi.ai.mcp.schema.ClientCapabilities;
 import za.co.sindi.ai.mcp.schema.Implementation;
 import za.co.sindi.ai.mcp.schema.InitializeRequest;
 import za.co.sindi.ai.mcp.schema.InitializeRequest.InitializeRequestParameters;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
+import za.co.sindi.ai.mcp.schema.JSONRPCNotification;
+import za.co.sindi.ai.mcp.schema.JSONRPCRequest;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
+import za.co.sindi.ai.mcp.schema.ProgressNotification;
+import za.co.sindi.ai.mcp.schema.ProgressToken;
+import za.co.sindi.ai.mcp.schema.ProgressNotification.ProgressNotificationParameters;
 import za.co.sindi.ai.mcp.schema.ProtocolVersion;
+import za.co.sindi.ai.mcp.schema.RequestId;
 
 /**
  * @author Buhake Sindi
@@ -31,5 +40,22 @@ public class JSONRPCTest {
 		JSONRPCMessage object = MCPSchema.deserializeJSONRPCMessage(mapper, data);
 		System.out.println(object.getClass());
 		System.out.println("Done.");
+		
+		JSONRPCRequest jsonRequest = MCPSchema.toJSONRPCRequest(request);
+		jsonRequest.setId(RequestId.of(0));
+		jsonRequest.getParams().put("_meta", Map.of("progressToken", ProgressToken.of(0)));
+		System.out.println(mapper.map(jsonRequest));
+		
+		ProgressNotification notification = new ProgressNotification();
+		ProgressNotificationParameters progressParameters = new ProgressNotificationParameters();
+        progressParameters.setProgressToken(ProgressToken.of("test"));
+        notification.setParameters(progressParameters);
+        JSONRPCNotification jsonNotification = MCPSchema.toJSONRPCNotification(notification);
+        String notificationStr = mapper.map(jsonNotification);
+        System.out.println(mapper.map(jsonNotification));
+        
+        JSONRPCNotification deser = (JSONRPCNotification) MCPSchema.deserializeJSONRPCMessage(notificationStr);
+        ProgressNotification deserNotification = MCPSchema.toNotification(jsonNotification);
+        System.out.println("Done!");
 	}
 }

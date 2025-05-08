@@ -9,7 +9,6 @@ import za.co.sindi.ai.mcp.schema.InitializeResult;
 import za.co.sindi.ai.mcp.schema.InitializedNotification;
 import za.co.sindi.ai.mcp.schema.LoggingLevel;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
-import za.co.sindi.ai.mcp.schema.ProtocolVersion;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.shared.ServerTransport;
 
