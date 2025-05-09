@@ -65,7 +65,7 @@ public final class MCPSchema {
 	
 	public static String serializeJSONRPCMessage(ObjectMapper objectMapper, JSONRPCMessage... messages) {
 		if (messages.length == 1) {
-			objectMapper.map(messages[0]);
+			return objectMapper.map(messages[0]);
 		}
 		
 		return objectMapper.map(messages);
