@@ -1,6 +1,7 @@
 package za.co.sindi.ai.mcp.client;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.shared.AbstractTransport;
 import za.co.sindi.ai.mcp.shared.ClientTransport;
 import za.co.sindi.ai.mcp.shared.TransportException;
+import za.co.sindi.commons.utils.Strings;
 
 /**
  * @author Buhake Sindi
@@ -23,7 +25,7 @@ import za.co.sindi.ai.mcp.shared.TransportException;
  */
 public class StdioClientTransport extends AbstractTransport implements ClientTransport {
 	
-	private final ServerParameters serverParameters;
+	private final StdioServerParameters serverParameters;
 	
 	private final AtomicBoolean initialized = new AtomicBoolean(false);
 	
@@ -34,7 +36,7 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 	/**
 	 * @param serverParameters
 	 */
-	public StdioClientTransport(final ServerParameters serverParameters) {
+	public StdioClientTransport(final StdioServerParameters serverParameters) {
 		super();
 		this.serverParameters = Objects.requireNonNull(serverParameters, "A server parameters is required.");
 	}
@@ -51,12 +53,21 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 		
 		final List<String> command = new ArrayList<>();
 		command.add(serverParameters.getCommand());
-		command.addAll(serverParameters.getArguments());
+		
+		if (serverParameters.getArguments() != null) {
+			command.addAll(serverParameters.getArguments());
+		}
 
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.command(command);
 		if (serverParameters.getEnvironmentVariables() != null)	processBuilder.environment().putAll(serverParameters.getEnvironmentVariables());
 		processBuilder.environment().putAll(System.getenv());
+		
+		if (!Strings.isNullOrEmpty(serverParameters.getCurrentWorkingDirectory())) {
+			processBuilder.directory(new File(serverParameters.getCurrentWorkingDirectory()));
+		}
+		
+		transportFuture = new CompletableFuture<>();
 		
 		// Start the process
 		try {
@@ -66,7 +77,9 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
             });
 		}
 		catch (IOException e) {
-			throw new TransportException("Failed to start process with command: " + command, e);
+			Throwable exception = new TransportException("Failed to start process with command: " + command, e);
+			transportFuture.completeExceptionally(exception);
+			if (getMessageHandler() != null) getMessageHandler().onError(exception);
 		}
 		
 		// Validate process streams
@@ -75,29 +88,33 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 			throw new TransportException("Process input or output stream is null");
 		}
 		
-		CompletableFuture<Void> resultMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.inputReader())) : CompletableFuture.supplyAsync(readContent(process.inputReader()), getExecutor()))
-				.thenAccept(line -> {
-					if (line == null) return ;
-					if (!line.endsWith("\n")) 
-	                	throw new TransportException("Message does not end with a newline.");
-					
-					getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(line));
-				});
+		Runnable stdOutReader = () -> {
+			String message = readContent(process.inputReader()).get();
+			if (message == null) return ;
+			if (!message.endsWith("\n")) 
+            	throw new TransportException("Message does not end with a newline.");
+			
+			getMessageHandler().onMessage(MCPSchema.deserializeJSONRPCMessage(message));
+		};
 		
-	CompletableFuture<Void> errorMessageFuture = (getExecutor() == null ? CompletableFuture.supplyAsync(readContent(process.errorReader())) : CompletableFuture.supplyAsync(readContent(process.errorReader()), getExecutor()))
-				.thenAccept(line -> {
-					if (line != null && getMessageHandler() != null) {
-						getMessageHandler().onError(new IllegalStateException(line));
-					}
-				});
-	
-	 	
-	 	transportFuture = resultMessageFuture.thenCombine(errorMessageFuture, (result, error) -> result)
-	 			.whenComplete((result, throwable) -> {
-						if (throwable != null) {
-							getMessageHandler().onError(throwable);
-						}
-					});
+		Runnable stdioErrReader = () -> {
+			String content = readContent(process.inputReader()).get();
+			if (content != null && getMessageHandler() != null) {
+				getMessageHandler().onError(new IllegalStateException(content));
+			}
+		};
+		
+		// Launch both readers on your executor;
+        CompletableFuture<Void> outFuture = CompletableFuture.runAsync(stdOutReader, getExecutor());
+        CompletableFuture<Void> errFuture = CompletableFuture.runAsync(stdioErrReader, getExecutor());
+        
+//        transportFuture = outFuture.thenCombine(errFuture, (result, error) -> result)
+//	 			.whenComplete((result, throwable) -> {
+//						if (throwable != null) {
+//							getMessageHandler().onError(throwable);
+//						}
+//					});
+		
 		return transportFuture;
 	}
 

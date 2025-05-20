@@ -276,6 +276,10 @@ public class ServerCapabilities implements Serializable {
 			return this;
 		}
 		
+		public Builder enableAll() {
+			return logging().completions().prompts(true).resources(true).tools(true);
+		}
+		
 		public ServerCapabilities build() {
 			return new ServerCapabilities(capabilities);
 		}

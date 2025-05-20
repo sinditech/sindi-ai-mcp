@@ -72,7 +72,9 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	
 	private RequestHandler<? extends Result> fallbackRequestHandler;
 	
-	private NotificationHandler fallbackNotificationHandler; 
+	private NotificationHandler fallbackNotificationHandler;
+	
+	private ErrorHandler errorHandler;
 	
 	/**
 	 * @param transport
@@ -149,6 +151,13 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		this.fallbackNotificationHandler = fallbackNotificationHandler;
 	}
 
+	/**
+	 * @param errorHandler the errorHandler to set
+	 */
+	public void setErrorHandler(ErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.AutoCloseable#close()
 	 */
@@ -166,7 +175,11 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		}
 	}
 	
-	public void onError(final Throwable throwable) {}
+	public void onError(final Throwable throwable) {
+		if (errorHandler != null) {
+			errorHandler.onError(throwable);
+		}
+	}
 	
 	public CompletableFuture<Void> connect() {
 		Preconditions.checkState(transport != null, "A MCP Transport is required.");

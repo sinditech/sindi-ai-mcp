@@ -18,7 +18,8 @@ public class StdioServerTest {
 
 	public static void main(String[] args) {
 		StdioServerTransport transport = new StdioServerTransport();
-		Server server = new DefaultServer(transport, new Implementation("Server", "1.0.0"), new ServerCapabilities.Builder().build(), null);
+		Server server = new DefaultServer(transport, new Implementation("Server", "1.0.0"), new ServerCapabilities.Builder().enableAll().build(), null);
+		server.setErrorHandler(throwable -> System.err.println(throwable));
 		MCPServer mcpServer = new DefaultMCPServer(server);
 		mcpServer.connect();
 	}

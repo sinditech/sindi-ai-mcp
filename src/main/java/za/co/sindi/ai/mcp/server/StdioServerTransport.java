@@ -93,7 +93,7 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 			throw new TransportException("This transport was not started or closed..");
 		}
 		
-		CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+		return CompletableFuture.runAsync(() -> {
 			try {
 				String content = MCPSchema.serializeJSONRPCMessage(message) + "\n"; // getMapper().map(message)
 				outputStream.write(content.getBytes(StandardCharsets.UTF_8));
@@ -103,7 +103,5 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 				throw new TransportException(e);
 			}
 		}, getExecutor());
-		
-		return future;
 	}
 }
