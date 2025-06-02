@@ -3,6 +3,7 @@
  */
 package za.co.sindi.ai.mcp.client;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -128,7 +129,7 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 				}
 				
 				if (event instanceof MessageEvent messageEvent) {
-					if (Strings.isNullOrEmpty(messageEvent.getLastEventId())) {
+					if (!Strings.isNullOrEmpty(messageEvent.getLastEventId())) {
 						lastEventId.set(RequestId.of(messageEvent.getLastEventId()));
 						if (onResumptionTokenEvent != null) {
 							onResumptionTokenEvent.accept(messageEvent.getLastEventId());
@@ -247,8 +248,13 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
+		if (httpClient != null) {
+			httpClient.shutdown();
+			httpClient.close();
+		}
+		
 		super.close();
 	}
 	

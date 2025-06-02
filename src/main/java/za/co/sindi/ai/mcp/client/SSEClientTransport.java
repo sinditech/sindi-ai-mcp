@@ -1,5 +1,6 @@
 package za.co.sindi.ai.mcp.client;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -182,7 +183,7 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 	 */
 	
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		CompletableFuture<Void> future = connectionFuture.get();
 		if (future != null && !future.isDone()) {
@@ -190,9 +191,18 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 		}
 		
 		if (eventSource != null && eventSource.getReadyState() != ReadyState.CLOSED) {
-			eventSource.close();
+			try {
+				eventSource.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				throw new IOException(e);
+			}
 		}
 		
+		if (httpClient != null) {
+			httpClient.shutdown();
+			httpClient.close();
+		}
 		super.close();
 	}
 	

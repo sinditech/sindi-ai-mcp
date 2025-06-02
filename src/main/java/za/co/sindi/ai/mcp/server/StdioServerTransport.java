@@ -76,7 +76,7 @@ public class StdioServerTransport extends AbstractTransport implements ServerTra
 	 * @see java.lang.AutoCloseable#close()
 	 */
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		initialized.compareAndSet(true, false);
 		if (readerFuture != null) readerFuture.cancel(true);

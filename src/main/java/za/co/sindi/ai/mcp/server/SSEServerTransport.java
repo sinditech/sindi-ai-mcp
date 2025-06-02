@@ -1,5 +1,6 @@
 package za.co.sindi.ai.mcp.server;
 
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -113,7 +114,7 @@ public class SSEServerTransport extends AbstractTransport implements ServerTrans
 	 * @see za.co.sindi.ai.mcp.shared.AbstractTransport#close()
 	 */
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		initialized.compareAndSet(true, false);
 		if (sseSession != null) {

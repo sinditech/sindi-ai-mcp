@@ -105,8 +105,10 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 		};
 		
 		// Launch both readers on your executor;
-        CompletableFuture<Void> outFuture = CompletableFuture.runAsync(stdOutReader, getExecutor());
-        CompletableFuture<Void> errFuture = CompletableFuture.runAsync(stdioErrReader, getExecutor());
+		new Thread(stdOutReader).start();
+		new Thread(stdioErrReader).start();
+//        CompletableFuture<Void> outFuture = CompletableFuture.runAsync(stdOutReader, getExecutor());
+//        CompletableFuture<Void> errFuture = CompletableFuture.runAsync(stdioErrReader, getExecutor());
         
 //        transportFuture = outFuture.thenCombine(errFuture, (result, error) -> result)
 //	 			.whenComplete((result, throwable) -> {
@@ -122,7 +124,7 @@ public class StdioClientTransport extends AbstractTransport implements ClientTra
 	 * @see java.lang.AutoCloseable#close()
 	 */
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		initialized.compareAndSet(true, false);
 		process.destroy();

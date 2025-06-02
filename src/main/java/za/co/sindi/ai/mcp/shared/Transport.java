@@ -1,5 +1,6 @@
 package za.co.sindi.ai.mcp.shared;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -11,7 +12,7 @@ import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
  * @author Buhake Sindi
  * @since 15 February 2025
  */
-public interface Transport extends AutoCloseable {
+public interface Transport extends Closeable {
 	
 	/**
 	 * @param requestTimeout the requestTimeout to set

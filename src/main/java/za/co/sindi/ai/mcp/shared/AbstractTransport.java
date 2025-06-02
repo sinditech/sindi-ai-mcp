@@ -1,5 +1,6 @@
 package za.co.sindi.ai.mcp.shared;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.logging.Logger;
@@ -55,7 +56,7 @@ public abstract class AbstractTransport implements Transport {
 	 * @see java.lang.AutoCloseable#close()
 	 */
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		if (messageHandler != null) {
 			messageHandler.onClose();
