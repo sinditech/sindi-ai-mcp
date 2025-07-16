@@ -24,6 +24,7 @@ import za.co.sindi.ai.mcp.schema.JSONRPCNotification;
 import za.co.sindi.ai.mcp.schema.JSONRPCRequest;
 import za.co.sindi.ai.mcp.schema.JSONRPCResponse;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
+import za.co.sindi.ai.mcp.schema.ProtocolVersion;
 import za.co.sindi.ai.mcp.schema.RequestId;
 import za.co.sindi.ai.mcp.shared.AbstractTransport;
 import za.co.sindi.ai.mcp.shared.ClientTransport;
@@ -60,6 +61,8 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 	
 	private HttpClient httpClient;
 	
+	private ProtocolVersion protocolVersion;
+	
 	/**
 	 * @param mcpUrl
 	 * @param accessToken
@@ -68,6 +71,20 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 		super();
 		this.mcpUrl = mcpUrl;
 		this.accessToken = accessToken;
+	}
+
+	/**
+	 * @return the protocolVersion
+	 */
+	public ProtocolVersion getProtocolVersion() {
+		return protocolVersion;
+	}
+
+	/**
+	 * @param protocolVersion the protocolVersion to set
+	 */
+	public void setProtocolVersion(ProtocolVersion protocolVersion) {
+		this.protocolVersion = protocolVersion;
 	}
 
 	@Override
@@ -262,6 +279,7 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 		if (!Strings.isNullOrEmpty(accessToken)) builder.header("Authorization", "Bearer " + accessToken);
 		String mcpSessionId = sessionId.get();
 		if (!Strings.isNullOrEmpty(mcpSessionId)) builder.header("mcp-session-id", mcpSessionId);
+		if (protocolVersion != null) builder.header("mcp-protocol-version", protocolVersion.toString());
 	}
 
 	@Override

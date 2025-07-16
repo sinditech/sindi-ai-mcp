@@ -6,8 +6,9 @@ package za.co.sindi.ai.mcp.schema;
  */
 public enum ProtocolVersion {
 	LATEST_PROTOCOL_VERSION(Schema.LATEST_PROTOCOL_VERSION)
+	,VERSION_2025_03_26("2025-03-26")
+	,VERSION_2024_11_05("2024-11-05")
 	,VERSION_2024_10_07("2024-10-07")
-	,VERSION_2024_11_05("2024-11-05") 
 	;
 	private final String version;
 

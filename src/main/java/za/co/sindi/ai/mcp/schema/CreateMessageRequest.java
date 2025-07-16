@@ -1,6 +1,7 @@
 package za.co.sindi.ai.mcp.schema;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.CreateMessageRequest.CreateMessageRequestParameters;
@@ -52,7 +53,7 @@ public final class CreateMessageRequest extends BaseRequest implements Parameter
 		private String[] stopSequences;
 		
 		@JsonbProperty
-		private Object metadata;
+		private Map<String, Object> metadata;
 
 		/**
 		 * @return the messages
@@ -155,14 +156,14 @@ public final class CreateMessageRequest extends BaseRequest implements Parameter
 		/**
 		 * @return the metadata
 		 */
-		public Object getMetadata() {
+		public Map<String, Object> getMetadata() {
 			return metadata;
 		}
 
 		/**
 		 * @param metadata the metadata to set
 		 */
-		public void setMetadata(Object metadata) {
+		public void setMetadata(Map<String, Object> metadata) {
 			this.metadata = metadata;
 		}
 	}
