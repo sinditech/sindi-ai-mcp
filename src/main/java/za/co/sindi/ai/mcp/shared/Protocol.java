@@ -1,7 +1,10 @@
 package za.co.sindi.ai.mcp.shared;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -62,6 +65,8 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	/** Map of progress handlers keyed by request id */
 	private final ConcurrentHashMap<RequestId, ProgressHandler> progressHandlers = new ConcurrentHashMap<>();
 	
+	private final Set<String> pendingDebouncedNotifications = Collections.synchronizedSet(new HashSet<>());
+	
 	private Executor executor = Executors.newVirtualThreadPerTaskExecutor();
 	
 	private T transport;
@@ -85,7 +90,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		
 		addNotificationHandler(ProgressNotification.METHOD_NOTIFICATION_PROGRESS, notification -> onProgress(MCPSchema.toNotification(notification)));
 		
-		addRequestHandler(PingRequest.METHOD_PING, (request, extra) ->  Schema.EMPTY_RESULT);
+		addRequestHandler(PingRequest.METHOD_PING, (request, extra) -> Schema.EMPTY_RESULT);
 	}
 
 	/**
@@ -315,6 +320,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		final String type = this instanceof Server ? "Server" : this instanceof Client ? "Client" : "Protocol";
 		LOGGER.info(type + " transport closed.");
 		progressHandlers.clear();
+		pendingDebouncedNotifications.clear();
 		if (closeCallback != null) {
 			closeCallback.onClose();
 		}

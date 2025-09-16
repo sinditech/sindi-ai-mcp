@@ -43,7 +43,7 @@ public class JsonProgressTokenSerialization implements JsonbSerializer<ProgressT
 		if (progressToken == null) {
 			try {
 				if (parser.isIntegralNumber()) {
-					progressToken = ProgressToken.of(parser.getLong());
+					progressToken = ProgressToken.of(parser.getInt());
 				}
 			} catch (IllegalStateException e) {
 				progressToken = ProgressToken.of(parser.getString());

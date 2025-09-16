@@ -9,7 +9,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
 public final class CallToolResult implements ServerResult {
 	
 	@JsonbProperty
-	private Content[] content;
+	private ContentBlock[] content;
 	
 	@JsonbProperty("isError")
 	private Boolean error;
@@ -17,14 +17,14 @@ public final class CallToolResult implements ServerResult {
 	/**
 	 * @return the content
 	 */
-	public Content[] getContent() {
+	public ContentBlock[] getContent() {
 		return content;
 	}
 
 	/**
 	 * @param content the content to set
 	 */
-	public void setContent(Content[] content) {
+	public void setContent(ContentBlock[] content) {
 		this.content = content;
 	}
 

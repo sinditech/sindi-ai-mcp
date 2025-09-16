@@ -6,7 +6,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 23 April 2025
  */
-public final class AudioContent extends Content {
+public final class AudioContent extends ContentBlock {
 
 	@JsonbProperty
 	private String data;

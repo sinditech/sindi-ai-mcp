@@ -10,10 +10,10 @@ import jakarta.json.bind.annotation.JsonbTypeInfo;
 @JsonbTypeInfo(
 	key = "type",
 	value = {
-	    @JsonbSubtype(alias="ref/resource", type=ResourceReference.class),
+	    @JsonbSubtype(alias="ref/resource", type=ResourceTemplateReference.class),
 	    @JsonbSubtype(alias="ref/prompt", type=PromptReference.class),
 	}
 )
-public sealed abstract class Reference extends Annotated permits ResourceReference, PromptReference {
+public sealed abstract class Reference extends Annotated permits ResourceTemplateReference, PromptReference {
 
 }

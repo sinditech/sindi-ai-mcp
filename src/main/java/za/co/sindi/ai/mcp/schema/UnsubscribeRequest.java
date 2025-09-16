@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.UnsubscribeRequest.UnsubscribeRequestParameters;
 
@@ -28,7 +26,7 @@ public final class UnsubscribeRequest extends BaseRequest implements ParameterBa
 		this.parameters = parameters;
 	}
 
-	public static final class UnsubscribeRequestParameters implements Serializable {
+	public static final class UnsubscribeRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
 		private String uri;

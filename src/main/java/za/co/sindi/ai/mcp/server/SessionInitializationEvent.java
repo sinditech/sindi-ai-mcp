@@ -12,5 +12,5 @@ import za.co.sindi.ai.mcp.shared.ServerTransport;
 @FunctionalInterface
 public interface SessionInitializationEvent<T extends ServerTransport> {
 
-	public void onSessionInitialized(final String sessionId, final T transport);
+	public void onSessionInitialized(final String sessionId);
 }

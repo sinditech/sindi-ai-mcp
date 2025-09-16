@@ -14,7 +14,7 @@ public class SamplingMessage implements Serializable {
 	private Role role;
 	
 	@JsonbProperty
-	private Content content;
+	private ContentBlock content;
 
 	/**
 	 * @return the role
@@ -33,14 +33,14 @@ public class SamplingMessage implements Serializable {
 	/**
 	 * @return the content
 	 */
-	public Content getContent() {
+	public ContentBlock getContent() {
 		return content;
 	}
 
 	/**
 	 * @param content the content to set
 	 */
-	public void setContent(Content content) {
+	public void setContent(ContentBlock content) {
 		this.content = content;
 	}
 }

@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.ResourceUpdatedNotification.ResourceUpdatedNotificationParameters;
 
@@ -30,7 +28,7 @@ public final class ResourceUpdatedNotification extends BaseNotification implemen
 		this.parameters = parameters;
 	}
 
-	public static final class ResourceUpdatedNotificationParameters implements Serializable {
+	public static final class ResourceUpdatedNotificationParameters extends BaseNotificationParameters {
 		
 		@JsonbProperty
 		private String uri;

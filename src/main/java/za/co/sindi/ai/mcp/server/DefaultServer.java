@@ -1,46 +1,40 @@
 package za.co.sindi.ai.mcp.server;
 
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-import za.co.sindi.ai.mcp.schema.ClientCapabilities;
+import za.co.sindi.ai.mcp.schema.EmptyResult;
 import za.co.sindi.ai.mcp.schema.Implementation;
-import za.co.sindi.ai.mcp.schema.InitializeRequest;
-import za.co.sindi.ai.mcp.schema.InitializeResult;
-import za.co.sindi.ai.mcp.schema.InitializedNotification;
 import za.co.sindi.ai.mcp.schema.LoggingLevel;
-import za.co.sindi.ai.mcp.schema.MCPSchema;
+import za.co.sindi.ai.mcp.schema.LoggingMessageNotification;
+import za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters;
+import za.co.sindi.ai.mcp.schema.Schema;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
+import za.co.sindi.ai.mcp.schema.SetLevelRequest;
+import za.co.sindi.ai.mcp.shared.RequestHandler;
 import za.co.sindi.ai.mcp.shared.ServerTransport;
+import za.co.sindi.commons.utils.Strings;
 
 /**
  * @author Buhake Sindi
  * @since 25 March 2025
  */
 public class DefaultServer extends Server {
-
-	private Implementation serverInfo;
-	private ServerCapabilities serverCapabilities;
-	private String instructions;
-	private Implementation clientInfo;
-	private ClientCapabilities clientCapabilities;
 	
-	private LoggingLevel loggingLevel = LoggingLevel.DEBUG;
+	private final Map<String, LoggingLevel> loggingLevels = new HashMap<>();
 	
 	/**
-	 * @param transport
-	 * @param serverInfo
-	 */
-	public DefaultServer(ServerTransport transport, Implementation serverInfo) {
-		this(transport, serverInfo, null, null);
-	}
-	
-	/**
-	 * @param transport
 	 * @param serverInfo
 	 * @param serverCapabilities
+	 * @param instructions
 	 */
-	public DefaultServer(ServerTransport transport, Implementation serverInfo, ServerCapabilities serverCapabilities) {
-		this(transport, serverInfo, serverCapabilities, null);
+	public DefaultServer(Implementation serverInfo, ServerCapabilities serverCapabilities, String instructions) {
+		super(serverInfo, serverCapabilities, instructions);
+		
+		if (getCapabilities() != null && getCapabilities().getLogging() != null) {
+			addRequestHandler(SetLevelRequest.METHOD_LOGGING_SETLEVEL, setLoggingLevelRequestHandler());
+		}
 	}
 	
 	/**
@@ -50,75 +44,37 @@ public class DefaultServer extends Server {
 	 * @param instructions
 	 */
 	public DefaultServer(ServerTransport transport, Implementation serverInfo, ServerCapabilities serverCapabilities, String instructions) {
-		super();
-		this.serverInfo = Objects.requireNonNull(serverInfo, "A server info is required.");
-		this.serverCapabilities = serverCapabilities; // Objects.requireNonNull(serverCapabilities, "A server capabilities is required.");
-		this.instructions = instructions;
+		this(serverInfo, serverCapabilities, instructions);
+		
 		setTransport(transport);
-		
-		addRequestHandler(InitializeRequest.METHOD_INITIALIZE, (request, extra) -> {
-			InitializeRequest initializeRequest = MCPSchema.toRequest(request);
-			clientCapabilities = initializeRequest.getParameters().getCapabilities();
-			clientInfo = initializeRequest.getParameters().getClientInfo();
-			
-			InitializeResult result = new InitializeResult();
-			result.setCapabilities(serverCapabilities);
-			result.setInstructions(instructions);
-			result.setServerInfo(serverInfo);
-			result.setProtocolVersion(initializeRequest.getParameters().getProtocolVersion());
-			
-			return result;
-		});
-		
-		addNotificationHandler(InitializedNotification.METHOD_NOTIFICATION_INITIALIZED, notification -> {});
 	}
 	
-	/**
-	 * @return the loggingLevel
-	 */
-	public LoggingLevel getLoggingLevel() {
-		return loggingLevel;
+	private RequestHandler<EmptyResult> setLoggingLevelRequestHandler() {
+	
+		return (request, extra) -> {
+			final String transportSessionId = extra.getSessionId();
+			final LoggingLevel level = LoggingLevel.of(String.valueOf(request.getParams().get("level")));
+			if (!Strings.isNullOrEmpty(transportSessionId) && level != null) {
+				loggingLevels.put(transportSessionId, level);
+			}
+			
+			return Schema.EMPTY_RESULT;
+		};
 	}
 
-	/**
-	 * @param loggingLevel the loggingLevel to set
-	 */
-	public void setLoggingLevel(LoggingLevel loggingLevel) {
-		this.loggingLevel = loggingLevel;
+	@Override
+	public CompletableFuture<Void> sendLoggingMessage(final LoggingMessageNotificationParameters parameters, final String sessionId) {
+		if (getCapabilities().getLogging() == null || (!Strings.isNullOrEmpty(sessionId) && isMessageIgnored(parameters.getLevel(), sessionId))) {
+			return CompletableFuture.completedFuture(null);
+		}
+		
+		LoggingMessageNotification notification = new LoggingMessageNotification();
+		notification.setParameters(parameters);
+		return sendNotification(notification);
 	}
-
-	/**
-	 * @return the serverInfo
-	 */
-	public Implementation getServerInfo() {
-		return serverInfo;
-	}
-
-	/**
-	 * @return the serverCapabilities
-	 */
-	public ServerCapabilities getServerCapabilities() {
-		return serverCapabilities;
-	}
-
-	/**
-	 * @return the instructions
-	 */
-	public String getInstructions() {
-		return instructions;
-	}
-
-	/**
-	 * @return the clientInfo
-	 */
-	public Implementation getClientInfo() {
-		return clientInfo;
-	}
-
-	/**
-	 * @return the clientCapabilities
-	 */
-	public ClientCapabilities getClientCapabilities() {
-		return clientCapabilities;
+	
+	private boolean isMessageIgnored(final LoggingLevel level, final String sessionId) {
+		final LoggingLevel currentLevel = loggingLevels.get(sessionId);
+		return level.ordinal() < currentLevel.ordinal();
 	}
 }

@@ -19,27 +19,27 @@ import za.co.sindi.ai.mcp.shared.Protocol;
  */
 public abstract class Client extends Protocol<ClientTransport, ClientRequest, ClientNotification, ClientResult> {
 
-	protected ClientCapabilities clientCapabilities;
+	protected ClientCapabilities capabilities;
 	protected Implementation clientInfo;
 	protected ServerCapabilities serverCapabilities;
 	protected Implementation serverInfo;
 	protected String instructions;
 
 	/**
-	 * @param clientCapabilities
+	 * @param capabilities
 	 * @param clientInfo
 	 */
-	protected Client(ClientCapabilities clientCapabilities, Implementation clientInfo) {
+	protected Client(ClientCapabilities capabilities, Implementation clientInfo) {
 		super();
-		this.clientCapabilities = Objects.requireNonNull(clientCapabilities, "A client capabilities is required.");
+		this.capabilities = Objects.requireNonNull(capabilities, "A client capabilities is required.");
 		this.clientInfo = Objects.requireNonNull(clientInfo, "A client info is required.");
 	}
 
 	/**
-	 * @return the clientCapabilities
+	 * @return the capabilities
 	 */
-	public ClientCapabilities getClientCapabilities() {
-		return clientCapabilities;
+	public ClientCapabilities getCapabilities() {
+		return capabilities;
 	}
 
 	/**
@@ -71,7 +71,7 @@ public abstract class Client extends Protocol<ClientTransport, ClientRequest, Cl
 	}
 	
 	protected CompletableFuture<Void> sendRootListChangedAsync() {
-		if (Boolean.TRUE.equals(getClientCapabilities().getRoots().getListChanged())) {
+		if (Boolean.TRUE.equals(getCapabilities().getRoots().getListChanged())) {
 			return sendNotification(new RootsListChangedNotification());
 		}
 		

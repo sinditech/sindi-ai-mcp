@@ -21,7 +21,7 @@ import za.co.sindi.ai.mcp.schema.Tool;
  * @author Buhake Sindi
  * @since 15 February 2025
  */
-public interface MCPClient {
+public interface MCPClient extends AutoCloseable {
 	
 	public void connect();
 

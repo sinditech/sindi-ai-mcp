@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters;
 
@@ -30,7 +28,7 @@ public final class LoggingMessageNotification extends BaseNotification implement
 		this.parameters = parameters;
 	}
 
-	public static final class LoggingMessageNotificationParameters implements Serializable {
+	public static final class LoggingMessageNotificationParameters extends BaseNotificationParameters {
 		
 		@JsonbProperty
 		private LoggingLevel level;

@@ -20,6 +20,9 @@ public class ClientCapabilities implements Serializable {
 	@JsonbProperty
 	public Object sampling;
 	
+	@JsonbProperty
+	private Object elicitation;
+	
 	/**
 	 * 
 	 */
@@ -32,12 +35,14 @@ public class ClientCapabilities implements Serializable {
 	 * @param experimental
 	 * @param roots
 	 * @param sampling
+	 * @param elicitation
 	 */
-	public ClientCapabilities(Map<String, Object> experimental, Roots roots, Object sampling) {
+	public ClientCapabilities(Map<String, Object> experimental, Roots roots, Object sampling, Object elicitation) {
 		super();
 		this.experimental = experimental;
 		this.roots = roots;
 		this.sampling = sampling;
+		this.elicitation = elicitation;
 	}
 
 	private ClientCapabilities(final ClientCapabilities other) {
@@ -45,6 +50,7 @@ public class ClientCapabilities implements Serializable {
 		this.experimental = other.experimental;
 		this.roots = other.roots;
 		this.sampling = other.sampling;
+		this.elicitation = other.elicitation;
 	}
 	
 	/**
@@ -89,6 +95,20 @@ public class ClientCapabilities implements Serializable {
 		this.sampling = sampling;
 	}
 
+	/**
+	 * @return the elicitation
+	 */
+	public Object getElicitation() {
+		return elicitation;
+	}
+
+	/**
+	 * @param elicitation the elicitation to set
+	 */
+	public void setElicitation(Object elicitation) {
+		this.elicitation = elicitation;
+	}
+
 	public static class Roots implements Serializable {
 		
 		@JsonbProperty
@@ -113,6 +133,10 @@ public class ClientCapabilities implements Serializable {
 		
 	}
 	
+	public static class Elicitation implements Serializable {
+		
+	}
+	
 	public static class Builder {
 		
 		private ClientCapabilities capabilities = new ClientCapabilities();
@@ -130,6 +154,11 @@ public class ClientCapabilities implements Serializable {
 		
 		public Builder sampling() {
 			capabilities.setSampling(new Sampling());
+			return this;
+		}
+		
+		public Builder elicitation() {
+			capabilities.setElicitation(new Elicitation());
 			return this;
 		}
 		

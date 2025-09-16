@@ -3,8 +3,6 @@ package za.co.sindi.ai.mcp.server;
 import java.util.concurrent.CompletableFuture;
 
 import za.co.sindi.ai.mcp.schema.CallToolResult;
-import za.co.sindi.ai.mcp.schema.CreateMessageRequest.CreateMessageRequestParameters;
-import za.co.sindi.ai.mcp.schema.CreateMessageResult;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
 import za.co.sindi.ai.mcp.schema.ListResourceTemplatesResult;
 import za.co.sindi.ai.mcp.schema.Prompt;
@@ -12,7 +10,6 @@ import za.co.sindi.ai.mcp.schema.PromptArgument;
 import za.co.sindi.ai.mcp.schema.ReadResourceResult;
 import za.co.sindi.ai.mcp.schema.Resource;
 import za.co.sindi.ai.mcp.schema.ResourceTemplate;
-import za.co.sindi.ai.mcp.schema.Root;
 import za.co.sindi.ai.mcp.schema.Tool;
 import za.co.sindi.ai.mcp.schema.Tool.InputSchema;
 import za.co.sindi.ai.mcp.shared.RequestHandler;
@@ -25,11 +22,11 @@ public interface MCPAsyncServer {
 	
 	public CompletableFuture<Void> connectAsync();
 
-	public CompletableFuture<Void> pingAsync();
-	
-	public CompletableFuture<CreateMessageResult> createMessageAsync(final CreateMessageRequestParameters parameters);
-	
-	public CompletableFuture<Root[]> listRootsAsync();
+//	public CompletableFuture<Void> pingAsync();
+//	
+//	public CompletableFuture<CreateMessageResult> createMessageAsync(final CreateMessageRequestParameters parameters);
+//	
+//	public CompletableFuture<Root[]> listRootsAsync();
 	
 	default CompletableFuture<Void> addToolAsync(final String name, final String description, final InputSchema inputSchema, final RequestHandler<CallToolResult> handler) {
 		Tool tool = new Tool();

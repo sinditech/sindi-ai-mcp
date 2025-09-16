@@ -92,7 +92,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 		super();
 		this.client = client;
 		
-		if (client.getClientCapabilities().getRoots() != null) {
+		if (client.getCapabilities().getRoots() != null) {
 			client.addRequestHandler(ListRootsRequest.METHOD_ROOTS_LIST, listRootsRequestHandler());
 			client.addNotificationHandler(RootsListChangedNotification.METHOD_NOTIFICATION_ROOTS_lIST_CHANGED, notification -> {});
 		}
@@ -124,7 +124,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	 * @param samplingHandler the samplingHandler to set
 	 */
 	public void setSamplingHandler(Function<CreateMessageRequest, RequestHandler<CreateMessageResult>> samplingHandler) {
-		if (client.getClientCapabilities().getSampling() != null) {
+		if (client.getCapabilities().getSampling() != null) {
 			if (samplingHandler == null) {
 				throw new IllegalArgumentException("Sampling handler must not be null when client capabilities include sampling");
 			}
@@ -150,7 +150,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	public CompletableFuture<Void> connectAsync() {
 		// TODO Auto-generated method stub
 		return client.connect()
-		  .thenCompose(result -> initializeAsync(client.getClientCapabilities(), client.getClientInfo()))
+		  .thenCompose(result -> initializeAsync(client.getCapabilities(), client.getClientInfo()))
 		  .thenCompose(result -> {
 				Preconditions.checkState(result != null, "Server sent invalid initialize result.");
 				
@@ -163,6 +163,12 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 				//Notify
 				return client.sendNotification(new InitializedNotification());
 			});
+	}
+	
+	@Override
+	public void close() throws Exception {
+		// TODO Auto-generated method stub
+		client.close();
 	}
 
 	/* (non-Javadoc)
@@ -551,10 +557,10 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	public CompletableFuture<Void> addRootAsync(Root root) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(root != null, "Root must not be null");
-		Preconditions.checkState(client.getClientCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
-		Preconditions.checkState(!roots.containsKey(root.getUri()), "Root with uri '" + root.getUri() + "' already exists");
+		Preconditions.checkState(client.getCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
+		Preconditions.checkState(!roots.containsKey(root.getUri()), "Root with uri '" + root.getUri() + "' already exists.");
 		
-		if (client.getClientCapabilities().getRoots() != null) {
+		if (client.getCapabilities().getRoots() != null) {
 			roots.put(root.getUri(), root);
 			LOGGER.info("Added root: " + root.getUri() + " (" + root.getName() + ")");
 		}
@@ -569,10 +575,10 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	public CompletableFuture<Void> removeRootAsync(String uri) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(uri), "Root uri must not be null");
-		Preconditions.checkState(client.getClientCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
-		Preconditions.checkState(roots.containsKey(uri), "Root with uri '" + uri + "' does not exist");
+		Preconditions.checkState(client.getCapabilities().getRoots() != null, "Client must be configured with roots capabilities");
+		Preconditions.checkState(roots.containsKey(uri), "Root with uri '" + uri + "' does not exist.");
 		
-		if (client.getClientCapabilities().getRoots() != null) {
+		if (client.getCapabilities().getRoots() != null) {
 			Root removed = roots.remove(uri);
 			if (removed != null) {
 				LOGGER.info("Removed root: " + removed.getUri() + " (" + removed.getName() + ")");

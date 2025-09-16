@@ -1,6 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
 import java.util.Map;
 
 import jakarta.json.bind.annotation.JsonbProperty;
@@ -29,7 +28,7 @@ public final class CallToolRequest extends BaseRequest implements ParameterBased
 		this.parameters = parameters;
 	}
 
-	public static final class CallToolRequestParameters implements Serializable {
+	public static final class CallToolRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
 		private String name;

@@ -70,6 +70,6 @@ public final class ProgressToken implements Serializable {
 	}
 	
 	public static ProgressToken of(final long value) {
-		return new ProgressToken(long.class, value);
+		return new ProgressToken(int.class, value);
 	}
 }

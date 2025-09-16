@@ -6,7 +6,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public final class EmbeddedResource extends Content {
+public final class EmbeddedResource extends ContentBlock {
 
 	@JsonbProperty
 	private ResourceContents resource;

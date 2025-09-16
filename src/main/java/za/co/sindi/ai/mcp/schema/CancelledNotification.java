@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.CancelledNotification.CancelledNotificationParameters;
 
@@ -30,7 +28,7 @@ public final class CancelledNotification extends BaseNotification implements Par
 		this.parameters = parameters;
 	}
 
-	public static final class CancelledNotificationParameters implements Serializable {
+	public static final class CancelledNotificationParameters extends BaseNotificationParameters {
 		
 		@JsonbProperty
 		private RequestId requestId;

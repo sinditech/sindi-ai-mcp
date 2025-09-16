@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.ProgressNotification.ProgressNotificationParameters;
 
@@ -30,7 +28,7 @@ public final class ProgressNotification extends BaseNotification implements Para
 		this.parameters = parameters;
 	}
 
-	public static final class ProgressNotificationParameters implements Serializable {
+	public static final class ProgressNotificationParameters extends BaseNotificationParameters {
 		
 		@JsonbProperty
 		private ProgressToken progressToken;

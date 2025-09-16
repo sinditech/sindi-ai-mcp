@@ -16,6 +16,6 @@ import jakarta.json.bind.annotation.JsonbTypeInfo;
 	    @JsonbSubtype(alias="resource", type=EmbeddedResource.class)
 	}
 )
-public sealed abstract class Content extends Annotated permits TextContent, ImageContent, AudioContent, EmbeddedResource {
+public sealed abstract class ContentBlock extends Annotated permits TextContent, ImageContent, AudioContent, EmbeddedResource {
 
 }

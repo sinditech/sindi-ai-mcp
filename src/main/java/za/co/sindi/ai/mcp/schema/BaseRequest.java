@@ -13,6 +13,7 @@ import jakarta.json.bind.annotation.JsonbTypeInfo;
 	    @JsonbSubtype(alias=CallToolRequest.METHOD_TOOLS_CALL, type=CallToolRequest.class),
 	    @JsonbSubtype(alias=CompleteRequest.METHOD_COMPLETION_COMPLETE, type=CompleteRequest.class),
 	    @JsonbSubtype(alias=CreateMessageRequest.METHOD_SAMPLING_CREATE_MESSAGE, type=CreateMessageRequest.class),
+	    @JsonbSubtype(alias=ElicitRequest.METHOD_ELICITATION_CREATE, type=ElicitRequest.class),
 	    @JsonbSubtype(alias=GetPromptRequest.METHOD_PROMPTS_GET, type=GetPromptRequest.class),
 	    @JsonbSubtype(alias=InitializeRequest.METHOD_INITIALIZE, type=InitializeRequest.class),
 	    @JsonbSubtype(alias=ListPromptsRequest.METHOD_LIST_PROMPTS, type=ListPromptsRequest.class),

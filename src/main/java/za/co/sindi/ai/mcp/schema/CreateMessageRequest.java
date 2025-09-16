@@ -1,6 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
 import java.util.Map;
 
 import jakarta.json.bind.annotation.JsonbProperty;
@@ -29,7 +28,7 @@ public final class CreateMessageRequest extends BaseRequest implements Parameter
 		this.parameters = parameters;
 	}
 
-	public static final class CreateMessageRequestParameters implements Serializable {
+	public static final class CreateMessageRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
 		private SamplingMessage[] messages;

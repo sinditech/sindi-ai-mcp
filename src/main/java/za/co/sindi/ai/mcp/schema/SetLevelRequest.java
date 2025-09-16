@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.SetLevelRequest.SetLevelRequestParameters;
 
@@ -28,7 +26,7 @@ public final class SetLevelRequest extends BaseRequest implements ParameterBased
 		this.parameters = parameters;
 	}
 
-	public static final class SetLevelRequestParameters implements Serializable {
+	public static final class SetLevelRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
 		private LoggingLevel level;

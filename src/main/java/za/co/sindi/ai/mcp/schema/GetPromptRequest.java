@@ -1,6 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
 import java.util.Map;
 
 import jakarta.json.bind.annotation.JsonbProperty;
@@ -29,7 +28,7 @@ public final class GetPromptRequest extends BaseRequest implements ParameterBase
 		this.parameters = parameters;
 	}
 
-	public static final class GetPromptRequestParameters implements Serializable {
+	public static final class GetPromptRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
 		private String name;

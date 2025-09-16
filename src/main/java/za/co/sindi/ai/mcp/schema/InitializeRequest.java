@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.InitializeRequest.InitializeRequestParameters;
 
@@ -28,7 +26,7 @@ public final class InitializeRequest extends BaseRequest implements ParameterBas
 		this.parameters = parameters;
 	}
 
-	public static final class InitializeRequestParameters implements Serializable {
+	public static final class InitializeRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
 		private ProtocolVersion protocolVersion;

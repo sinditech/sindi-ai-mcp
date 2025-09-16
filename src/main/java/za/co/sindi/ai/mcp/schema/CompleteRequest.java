@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.CompleteRequest.CompleteRequestParameters;
 
@@ -28,7 +26,7 @@ public final class CompleteRequest extends BaseRequest implements ParameterBased
 		this.parameters = parameters;
 	}
 
-	public static final class CompleteRequestParameters implements Serializable {
+	public static final class CompleteRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty("ref")
 		private Reference reference;

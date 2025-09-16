@@ -1,7 +1,5 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 import za.co.sindi.ai.mcp.schema.PaginatedRequest.PaginatedRequestParameters;
 
@@ -28,7 +26,7 @@ public abstract class PaginatedRequest extends BaseRequest implements ParameterB
 		this.parameters = parameters;
 	}
 
-	public static final class PaginatedRequestParameters implements Serializable {
+	public static final class PaginatedRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
 		private String cursor;
