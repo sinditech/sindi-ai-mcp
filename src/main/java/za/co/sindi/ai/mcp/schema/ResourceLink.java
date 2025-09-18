@@ -1,14 +1,18 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.util.Map;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public class Resource extends BaseMetadata {
+public final class ResourceLink extends ContentBlock {
+	
+	@JsonbProperty
+	private String name;
+	
+	@JsonbProperty
+	private String title;
 
 	@JsonbProperty
 	private String uri;
@@ -21,12 +25,34 @@ public class Resource extends BaseMetadata {
 	
 	@JsonbProperty
 	private Long size;
-	
-	@JsonbProperty
-	private Annotations annotations;
-	
-	@JsonbProperty("_meta")
-	private Map<String, Object> meta;
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
+	 * @return the title
+	 */
+	public String getTitle() {
+		return title;
+	}
+
+	/**
+	 * @param title the title to set
+	 */
+	public void setTitle(String title) {
+		this.title = title;
+	}
 
 	/**
 	 * @return the uri
@@ -82,33 +108,5 @@ public class Resource extends BaseMetadata {
 	 */
 	public void setSize(Long size) {
 		this.size = size;
-	}
-
-	/**
-	 * @return the annotations
-	 */
-	public Annotations getAnnotations() {
-		return annotations;
-	}
-
-	/**
-	 * @param annotations the annotations to set
-	 */
-	public void setAnnotations(Annotations annotations) {
-		this.annotations = annotations;
-	}
-
-	/**
-	 * @return the meta
-	 */
-	public Map<String, Object> getMeta() {
-		return meta;
-	}
-
-	/**
-	 * @param meta the meta to set
-	 */
-	public void setMeta(Map<String, Object> meta) {
-		this.meta = meta;
 	}
 }

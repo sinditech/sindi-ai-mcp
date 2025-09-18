@@ -14,6 +14,6 @@ import jakarta.json.bind.annotation.JsonbTypeInfo;
 	    @JsonbSubtype(alias="ref/prompt", type=PromptReference.class),
 	}
 )
-public sealed abstract class Reference extends Annotated permits ResourceTemplateReference, PromptReference {
+public sealed abstract class Reference permits ResourceTemplateReference, PromptReference {
 
 }

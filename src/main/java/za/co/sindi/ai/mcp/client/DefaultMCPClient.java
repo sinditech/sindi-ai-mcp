@@ -18,6 +18,7 @@ import za.co.sindi.ai.mcp.schema.CompleteResult;
 import za.co.sindi.ai.mcp.schema.CompleteResult.Completion;
 import za.co.sindi.ai.mcp.schema.CreateMessageRequest;
 import za.co.sindi.ai.mcp.schema.CreateMessageResult;
+import za.co.sindi.ai.mcp.schema.Cursor;
 import za.co.sindi.ai.mcp.schema.EmptyResult;
 import za.co.sindi.ai.mcp.schema.GetPromptRequest;
 import za.co.sindi.ai.mcp.schema.GetPromptRequest.GetPromptRequestParameters;
@@ -351,7 +352,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	 * @see za.co.sindi.ai.mcp.client.MCPClient#listTools(java.lang.String)
 	 */
 	@Override
-	public Tool[] listTools(String cursor) {
+	public Tool[] listTools(Cursor cursor) {
 		// TODO Auto-generated method stub
 		try {
 			return listToolsAsync(cursor).get();
@@ -496,7 +497,7 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 	 * @see za.co.sindi.ai.mcp.client.MCPAsyncClient#listToolsAsync(java.lang.String)
 	 */
 	@Override
-	public CompletableFuture<Tool[]> listToolsAsync(String cursor) {
+	public CompletableFuture<Tool[]> listToolsAsync(Cursor cursor) {
 		// TODO Auto-generated method stub
 		ListToolsRequest request = new ListToolsRequest();
 		PaginatedRequestParameters parameters = new PaginatedRequestParameters();

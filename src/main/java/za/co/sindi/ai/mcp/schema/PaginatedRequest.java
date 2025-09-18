@@ -29,19 +29,19 @@ public abstract class PaginatedRequest extends BaseRequest implements ParameterB
 	public static final class PaginatedRequestParameters extends BaseRequestParameters {
 		
 		@JsonbProperty
-		private String cursor;
+		private Cursor cursor;
 
 		/**
 		 * @return the cursor
 		 */
-		public String getCursor() {
+		public Cursor getCursor() {
 			return cursor;
 		}
 
 		/**
 		 * @param cursor the cursor to set
 		 */
-		public void setCursor(String cursor) {
+		public void setCursor(Cursor cursor) {
 			this.cursor = cursor;
 		}
 	}

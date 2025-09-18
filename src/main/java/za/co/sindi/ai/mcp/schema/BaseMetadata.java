@@ -1,12 +1,17 @@
+/**
+ * 
+ */
 package za.co.sindi.ai.mcp.schema;
+
+import java.io.Serializable;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
  * @author Buhake Sindi
- * @since 08 February 2025
+ * @since 18 September 2025
  */
-public final class PromptReference extends Reference {
+public abstract class BaseMetadata implements Serializable {
 
 	@JsonbProperty
 	private String name;

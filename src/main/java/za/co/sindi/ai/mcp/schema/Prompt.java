@@ -1,6 +1,6 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
+import java.util.Map;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 
@@ -8,30 +8,16 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public class Prompt implements Serializable {
+public class Prompt extends BaseMetadata {
 
-	@JsonbProperty
-	private String name;
-	
 	@JsonbProperty
 	private String description;
 	
 	@JsonbProperty
 	private PromptArgument[] arguments;
-
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+	
+	@JsonbProperty("_meta")
+	private Map<String, Object> meta;
 
 	/**
 	 * @return the description
@@ -59,5 +45,19 @@ public class Prompt implements Serializable {
 	 */
 	public void setArguments(PromptArgument[] arguments) {
 		this.arguments = arguments;
+	}
+
+	/**
+	 * @return the meta
+	 */
+	public Map<String, Object> getMeta() {
+		return meta;
+	}
+
+	/**
+	 * @param meta the meta to set
+	 */
+	public void setMeta(Map<String, Object> meta) {
+		this.meta = meta;
 	}
 }

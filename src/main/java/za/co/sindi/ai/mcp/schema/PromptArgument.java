@@ -1,17 +1,12 @@
 package za.co.sindi.ai.mcp.schema;
 
-import java.io.Serializable;
-
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public class PromptArgument implements Serializable {
-
-	@JsonbProperty
-	private String name;
+public class PromptArgument extends BaseMetadata {
 	
 	@JsonbProperty
 	private String description;
@@ -29,28 +24,16 @@ public class PromptArgument implements Serializable {
 
 	/**
 	 * @param name
+	 * @param title
 	 * @param description
 	 * @param required
 	 */
-	public PromptArgument(String name, String description, Boolean required) {
+	public PromptArgument(String name, String title, String description, Boolean required) {
 		super();
-		this.name = name;
+		setName(name);
+		setTitle(title);
 		this.description = description;
 		this.required = required;
-	}
-
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	/**

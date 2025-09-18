@@ -9,19 +9,19 @@ import jakarta.json.bind.annotation.JsonbProperty;
 public abstract class PaginatedResult implements Result {
 	
 	@JsonbProperty
-	private String nextCursor;
+	private Cursor nextCursor;
 
 	/**
 	 * @return the nextCursor
 	 */
-	public String getNextCursor() {
+	public Cursor getNextCursor() {
 		return nextCursor;
 	}
 
 	/**
 	 * @param nextCursor the nextCursor to set
 	 */
-	public void setNextCursor(String nextCursor) {
+	public void setNextCursor(Cursor nextCursor) {
 		this.nextCursor = nextCursor;
 	}
 }

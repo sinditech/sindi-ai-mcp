@@ -6,6 +6,7 @@ import za.co.sindi.ai.mcp.schema.CallToolResult;
 import za.co.sindi.ai.mcp.schema.ClientCapabilities;
 import za.co.sindi.ai.mcp.schema.CompleteRequest.Argument;
 import za.co.sindi.ai.mcp.schema.CompleteResult.Completion;
+import za.co.sindi.ai.mcp.schema.Cursor;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
 import za.co.sindi.ai.mcp.schema.Implementation;
 import za.co.sindi.ai.mcp.schema.InitializeResult;
@@ -45,7 +46,7 @@ public interface MCPClient extends AutoCloseable {
 		return listTools(null);
 	}
 	
-	public Tool[] listTools(final String cursor);
+	public Tool[] listTools(final Cursor cursor);
 	
 	public CallToolResult callTool(final String name, final Map<String, Object> arguments);
 	

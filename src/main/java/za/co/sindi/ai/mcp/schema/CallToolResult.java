@@ -1,5 +1,7 @@
 package za.co.sindi.ai.mcp.schema;
 
+import java.util.Map;
+
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
@@ -10,6 +12,9 @@ public final class CallToolResult implements ServerResult {
 	
 	@JsonbProperty
 	private ContentBlock[] content;
+	
+	@JsonbProperty
+	private Map<String, Object> structuredContent;
 	
 	@JsonbProperty("isError")
 	private Boolean error;
@@ -26,6 +31,20 @@ public final class CallToolResult implements ServerResult {
 	 */
 	public void setContent(ContentBlock[] content) {
 		this.content = content;
+	}
+
+	/**
+	 * @return the structuredContent
+	 */
+	public Map<String, Object> getStructuredContent() {
+		return structuredContent;
+	}
+
+	/**
+	 * @param structuredContent the structuredContent to set
+	 */
+	public void setStructuredContent(Map<String, Object> structuredContent) {
+		this.structuredContent = structuredContent;
 	}
 
 	/**

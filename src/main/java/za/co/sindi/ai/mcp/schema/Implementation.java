@@ -8,10 +8,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public class Implementation implements Serializable {
-
-	@JsonbProperty
-	private String name;
+public class Implementation extends BaseMetadata {
 	
 	@JsonbProperty
 	private String version;
@@ -30,22 +27,8 @@ public class Implementation implements Serializable {
 	 */
 	public Implementation(String name, String version) {
 		super();
-		this.name = name;
+		setName(name);
 		this.version = version;
-	}
-
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	/**

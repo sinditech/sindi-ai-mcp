@@ -15,7 +15,7 @@ public final class EnumSchema extends PrimitiveSchemaDefinition {
 	private String[] _enum;
 	
 	@JsonbProperty
-	private String enumNames;
+	private String[] enumNames;
 	
 	/**
 	 * 
@@ -43,16 +43,14 @@ public final class EnumSchema extends PrimitiveSchemaDefinition {
 	/**
 	 * @return the enumNames
 	 */
-	public String getEnumNames() {
+	public String[] getEnumNames() {
 		return enumNames;
 	}
 
 	/**
 	 * @param enumNames the enumNames to set
 	 */
-	public void setEnumNames(String enumNames) {
+	public void setEnumNames(String[] enumNames) {
 		this.enumNames = enumNames;
 	}
-	
-	
 }

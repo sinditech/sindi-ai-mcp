@@ -25,13 +25,14 @@ public class JSONObjectMapper implements ObjectMapper {
 	private static JsonbConfig newJsonbConfig() {
 		if (config == null) {
 			config = new JsonbConfig();
-			config.withAdapters(new JsonJSONRPCVersionAdapter(),
+			config.withAdapters(new JsonIncludeContextAdapter(),
+								new JsonJSONRPCVersionAdapter(),
 								new JsonLoggingLevelAdapter(),
 								new JsonRoleAdapter(),
 								new JsonProtocolVersionAdapter(),
 								new JsonStringSchemaFormatAdapter())
-				  .withSerializers(new JsonRequestIdSerialization(), new JsonProgressTokenSerialization())
-				  .withDeserializers(new JsonRequestIdSerialization(), new JsonProgressTokenSerialization());
+				  .withSerializers(new JsonCursorSerialization(), new JsonRequestIdSerialization(), new JsonProgressTokenSerialization())
+				  .withDeserializers(new JsonCursorSerialization(), new JsonRequestIdSerialization(), new JsonProgressTokenSerialization());
 		}
 		return config;
 	}

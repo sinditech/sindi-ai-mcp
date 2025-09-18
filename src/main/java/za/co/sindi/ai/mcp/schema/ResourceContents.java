@@ -1,6 +1,7 @@
 package za.co.sindi.ai.mcp.schema;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 
@@ -15,6 +16,9 @@ public sealed abstract class ResourceContents implements Serializable permits Te
 	
 	@JsonbProperty
 	private String mimeType;
+	
+	@JsonbProperty("_meta")
+	private Map<String, Object> meta;
 
 	/**
 	 * @return the uri
@@ -42,5 +46,19 @@ public sealed abstract class ResourceContents implements Serializable permits Te
 	 */
 	public void setMimeType(String mimeType) {
 		this.mimeType = mimeType;
+	}
+
+	/**
+	 * @return the meta
+	 */
+	public Map<String, Object> getMeta() {
+		return meta;
+	}
+
+	/**
+	 * @param meta the meta to set
+	 */
+	public void setMeta(Map<String, Object> meta) {
+		this.meta = meta;
 	}
 }

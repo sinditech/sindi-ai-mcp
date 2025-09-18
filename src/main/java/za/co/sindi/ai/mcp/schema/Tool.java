@@ -9,10 +9,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 08 February 2025
  */
-public class Tool implements Serializable {
-
-	@JsonbProperty
-	private String name;
+public class Tool extends BaseMetadata {
 	
 	@JsonbProperty
 	private String description;
@@ -21,21 +18,14 @@ public class Tool implements Serializable {
 	private InputSchema inputSchema;
 	
 	@JsonbProperty
+	private OutputSchema outputSchema;
+	
+	@JsonbProperty
 	private ToolAnnotations annotations;
 	
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+	@JsonbProperty("_meta")
+	private Map<String, Object> meta;
+	
 
 	/**
 	 * @return the description
@@ -66,6 +56,20 @@ public class Tool implements Serializable {
 	}
 
 	/**
+	 * @return the outputSchema
+	 */
+	public OutputSchema getOutputSchema() {
+		return outputSchema;
+	}
+
+	/**
+	 * @param outputSchema the outputSchema to set
+	 */
+	public void setOutputSchema(OutputSchema outputSchema) {
+		this.outputSchema = outputSchema;
+	}
+
+	/**
 	 * @return the annotations
 	 */
 	public ToolAnnotations getAnnotations() {
@@ -77,6 +81,20 @@ public class Tool implements Serializable {
 	 */
 	public void setAnnotations(ToolAnnotations annotations) {
 		this.annotations = annotations;
+	}
+
+	/**
+	 * @return the meta
+	 */
+	public Map<String, Object> getMeta() {
+		return meta;
+	}
+
+	/**
+	 * @param meta the meta to set
+	 */
+	public void setMeta(Map<String, Object> meta) {
+		this.meta = meta;
 	}
 
 	public static class InputSchema implements Serializable {
@@ -131,75 +149,129 @@ public class Tool implements Serializable {
 		public void setRequired(String[] required) {
 			this.required = required;
 		}
+	}
+	
+	public static class OutputSchema implements Serializable {
 		
-		public static class PropertySchema implements Serializable {
-			
-			@JsonbProperty
-			private String type;
-			
-			@JsonbProperty
-			private String description;
-			
-			@JsonbProperty
-			private PropertySchema items;
+		@JsonbProperty
+		private String type;
+		
+		@JsonbProperty
+		private Map<String, PropertySchema> properties;
+		
+		@JsonbProperty
+		private String[] required;
 
-			/**
-			 * 
-			 */
-			public PropertySchema() {
-				super();
-				// TODO Auto-generated constructor stub
-			}
+		/**
+		 * @return the type
+		 */
+		public String getType() {
+			return type;
+		}
 
-			/**
-			 * @param type
-			 */
-			public PropertySchema(String type) {
-				super();
-				this.type = type;
-			}
+		/**
+		 * @param type the type to set
+		 */
+		public void setType(String type) {
+			this.type = type;
+		}
 
-			/**
-			 * @return the type
-			 */
-			public String getType() {
-				return type;
-			}
+		/**
+		 * @return the properties
+		 */
+		public Map<String, PropertySchema> getProperties() {
+			return properties;
+		}
 
-			/**
-			 * @param type the type to set
-			 */
-			public void setType(String type) {
-				this.type = type;
-			}
+		/**
+		 * @param properties the properties to set
+		 */
+		public void setProperties(Map<String, PropertySchema> properties) {
+			this.properties = properties;
+		}
 
-			/**
-			 * @return the description
-			 */
-			public String getDescription() {
-				return description;
-			}
+		/**
+		 * @return the required
+		 */
+		public String[] getRequired() {
+			return required;
+		}
 
-			/**
-			 * @param description the description to set
-			 */
-			public void setDescription(String description) {
-				this.description = description;
-			}
+		/**
+		 * @param required the required to set
+		 */
+		public void setRequired(String[] required) {
+			this.required = required;
+		}
+	}
+	
+	public static class PropertySchema implements Serializable {
+		
+		@JsonbProperty
+		private String type;
+		
+		@JsonbProperty
+		private String description;
+		
+		@JsonbProperty
+		private PropertySchema items;
 
-			/**
-			 * @return the items
-			 */
-			public PropertySchema getItems() {
-				return items;
-			}
+		/**
+		 * 
+		 */
+		public PropertySchema() {
+			super();
+			// TODO Auto-generated constructor stub
+		}
 
-			/**
-			 * @param items the items to set
-			 */
-			public void setItems(PropertySchema items) {
-				this.items = items;
-			}
+		/**
+		 * @param type
+		 */
+		public PropertySchema(String type) {
+			super();
+			this.type = type;
+		}
+
+		/**
+		 * @return the type
+		 */
+		public String getType() {
+			return type;
+		}
+
+		/**
+		 * @param type the type to set
+		 */
+		public void setType(String type) {
+			this.type = type;
+		}
+
+		/**
+		 * @return the description
+		 */
+		public String getDescription() {
+			return description;
+		}
+
+		/**
+		 * @param description the description to set
+		 */
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		/**
+		 * @return the items
+		 */
+		public PropertySchema getItems() {
+			return items;
+		}
+
+		/**
+		 * @param items the items to set
+		 */
+		public void setItems(PropertySchema items) {
+			this.items = items;
 		}
 	}
 	
