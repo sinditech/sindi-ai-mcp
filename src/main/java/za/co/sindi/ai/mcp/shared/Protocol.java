@@ -347,6 +347,12 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			});
 		} else {
 			RequestHandlerExtra extra = new RequestHandlerExtra();
+			extra.setRequestId(request.getId());
+			extra.setSessionId(transport.getSessionId());
+			if (request.getParams().containsKey("_meta")) {
+				extra.setMeta()
+			}
+			
 			Result result = handler.handle(request, extra);
 			LOGGER.info("Request handled successfully: " + request.getMethod() + ", ID: " + request.getId());
 			sendResult(request.getId(), result)

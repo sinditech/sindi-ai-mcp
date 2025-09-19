@@ -38,7 +38,7 @@ public class RequestHandlerExtra {
 	/**
 	 * @param sessionId the sessionId to set
 	 */
-	public void setSessionId(String sessionId) {
+	void setSessionId(String sessionId) {
 		this.sessionId = sessionId;
 	}
 
@@ -52,7 +52,7 @@ public class RequestHandlerExtra {
 	/**
 	 * @param meta the meta to set
 	 */
-	public void setMeta(RequestMeta meta) {
+	void setMeta(RequestMeta meta) {
 		this.meta = meta;
 	}
 
@@ -66,7 +66,7 @@ public class RequestHandlerExtra {
 	/**
 	 * @param requestId the requestId to set
 	 */
-	public void setRequestId(RequestId requestId) {
+	void setRequestId(RequestId requestId) {
 		this.requestId = requestId;
 	}
 }
