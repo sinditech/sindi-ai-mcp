@@ -159,6 +159,8 @@ public class DefaultMCPClient implements MCPAsyncClient, MCPClient {
 				
 				client.serverCapabilities = result.getCapabilities();
 				client.serverInfo = result.getServerInfo();
+				// HTTP transports must set the protocol version in each header after initialization.
+				client.getTransport().setProtocolVersion(result.getProtocolVersion());
 				client.instructions = result.getInstructions();
 				
 				//Notify

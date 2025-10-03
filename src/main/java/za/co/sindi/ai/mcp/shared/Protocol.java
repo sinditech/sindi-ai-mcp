@@ -35,6 +35,7 @@ import za.co.sindi.ai.mcp.schema.ProgressNotification;
 import za.co.sindi.ai.mcp.schema.ProgressToken;
 import za.co.sindi.ai.mcp.schema.Request;
 import za.co.sindi.ai.mcp.schema.RequestId;
+import za.co.sindi.ai.mcp.schema.RequestMeta;
 import za.co.sindi.ai.mcp.schema.Result;
 import za.co.sindi.ai.mcp.schema.Schema;
 import za.co.sindi.ai.mcp.server.Server;
@@ -333,6 +334,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 		responseHandlers.clear();
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void onRequest(JSONRPCRequest request) {
 		LOGGER.info("Received request: " + request.getMethod() + ", ID: " + request.getId());
 		RequestHandler<? extends Result> handler = requestHandlers.containsKey(request.getMethod()) ? requestHandlers.get(request.getMethod()) : fallbackRequestHandler;
@@ -350,7 +352,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			extra.setRequestId(request.getId());
 			extra.setSessionId(transport.getSessionId());
 			if (request.getParams().containsKey("_meta")) {
-				extra.setMeta()
+				extra.setMeta(MCPSchema.toObject((Map<String, Object>)request.getParams().get("_meta"), RequestMeta.class));
 			}
 			
 			Result result = handler.handle(request, extra);

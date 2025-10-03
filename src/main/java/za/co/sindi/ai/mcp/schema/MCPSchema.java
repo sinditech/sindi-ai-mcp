@@ -179,4 +179,13 @@ public final class MCPSchema {
 		jsonRPCNotification.setMethod(NOTIFICATION_METHODS.get(notification.getClass()));
 		return jsonRPCNotification;
 	}
+	
+	public static <T> T toObject(final Map<String, Object> map, final Class<T> clazz) {
+		return toObject(MAPPER, map, clazz);
+	}
+	
+	public static <T> T toObject(final ObjectMapper objectMapper, final Map<String, Object> map, final Class<T> clazz) {
+		String jsonText = objectMapper.map(map);
+		return objectMapper.map(jsonText, clazz);
+	}
 }

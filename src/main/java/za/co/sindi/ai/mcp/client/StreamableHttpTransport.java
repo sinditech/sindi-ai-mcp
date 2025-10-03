@@ -73,20 +73,6 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 		this.accessToken = accessToken;
 	}
 
-	/**
-	 * @return the protocolVersion
-	 */
-	public ProtocolVersion getProtocolVersion() {
-		return protocolVersion;
-	}
-
-	/**
-	 * @param protocolVersion the protocolVersion to set
-	 */
-	public void setProtocolVersion(ProtocolVersion protocolVersion) {
-		this.protocolVersion = protocolVersion;
-	}
-
 	@Override
 	public CompletableFuture<Void> startAsync() {
 		// TODO Auto-generated method stub
@@ -286,5 +272,11 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 	public String getSessionId() {
 		// TODO Auto-generated method stub
 		return sessionId.get();
+	}
+
+	@Override
+	public void setProtocolVersion(ProtocolVersion protocolVersion) {
+		// TODO Auto-generated method stub
+		this.protocolVersion = protocolVersion;
 	}
 }

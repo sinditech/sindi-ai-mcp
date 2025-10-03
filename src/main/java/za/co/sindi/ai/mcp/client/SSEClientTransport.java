@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import za.co.sindi.ai.mcp.client.EventSource.ReadyState;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
+import za.co.sindi.ai.mcp.schema.ProtocolVersion;
 import za.co.sindi.ai.mcp.shared.AbstractTransport;
 import za.co.sindi.ai.mcp.shared.ClientTransport;
 import za.co.sindi.ai.mcp.shared.TransportException;
@@ -53,6 +54,8 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 	private HttpClient httpClient;
 	
 	private EventSource eventSource;
+	
+	private ProtocolVersion protocolVersion;
 	
 	/**
 	 * @param baseUrl
@@ -208,5 +211,12 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 	
 	private void applyCommonHeaders(final HttpRequest.Builder builder) {
 		if (!Strings.isNullOrEmpty(accessToken)) builder.header("Authorization", "Bearer " + accessToken);
+		if (protocolVersion != null) builder.header("mcp-protocol-version", protocolVersion.toString());
+	}
+
+	@Override
+	public void setProtocolVersion(ProtocolVersion protocolVersion) {
+		// TODO Auto-generated method stub
+		this.protocolVersion = protocolVersion;
 	}
 }
