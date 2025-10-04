@@ -355,9 +355,11 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 				extra.setMeta(MCPSchema.toObject((Map<String, Object>)request.getParams().get("_meta"), RequestMeta.class));
 			}
 			
-			Result result = handler.handle(request, extra);
-			LOGGER.info("Request handled successfully: " + request.getMethod() + ", ID: " + request.getId());
-			sendResult(request.getId(), result)
+			CompletableFuture.supplyAsync(() -> {
+				Result result = handler.handle(request, extra);
+				LOGGER.info("Request handled successfully: " + request.getMethod() + ", ID: " + request.getId());
+				return result;
+			}).thenCompose(result -> sendResult(request.getId(), result))
 			.handle((response, throwable) -> {
 				if (throwable != null) {
 					LOGGER.severe("Error handling request: " + request.getMethod() + ", ID: " + request.getId());
@@ -370,7 +372,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 				
 				// If no exception, return the original result
 	            return CompletableFuture.completedFuture(response);
-			}).thenCompose(future -> future);
+			});//.thenCompose(future -> future);
 		}
 	}
 	
