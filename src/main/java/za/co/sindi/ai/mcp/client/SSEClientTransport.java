@@ -168,7 +168,7 @@ public class SSEClientTransport extends AbstractTransport implements ClientTrans
 		String jsonText = MCPSchema.serializeJSONRPCMessage(message);   //getMapper().map(message);
 		HttpRequest.Builder builder = HttpRequest.newBuilder()
 				.uri(URI.create(this.baseUrl + endpoint))
-				.header("ContentBlock-Type", "application/json")
+				.header("Content-Type", "application/json")
 				.POST(HttpRequest.BodyPublishers.ofString(jsonText));
 		applyCommonHeaders(builder);
 		

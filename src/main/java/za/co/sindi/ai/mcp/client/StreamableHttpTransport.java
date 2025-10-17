@@ -183,7 +183,7 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 		String jsonText = MAPPER.map(message);
 		HttpRequest.Builder builder = HttpRequest.newBuilder()
 				.uri(URI.create(mcpUrl))
-				.header("ContentBlock-Type", "application/json")
+				.header("Content-Type", "application/json")
 				.header("Accept", "application/json, text/event-stream")
 				.POST(HttpRequest.BodyPublishers.ofString(jsonText));
 		applyCommonHeaders(builder);
@@ -191,7 +191,7 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 		BodyHandler<Either<String, Void>> bodyHandler = (responseInfo) -> {
 			if (responseInfo.statusCode() == 200) {
 				// Get content type from response
-	            String contentType = responseInfo.headers().firstValue("ContentBlock-Type").orElse("").toLowerCase();
+	            String contentType = responseInfo.headers().firstValue("Content-Type").orElse("").toLowerCase();
 	            if (contentType.contains("text/event-stream")) {
 	            	return BodySubscribers.mapping(BodyHandlers.fromLineSubscriber(new SSEEventSubscriber(handleSseEvent(null, null, onResumptionTokenEvent))).apply(responseInfo), mapper -> Either.right(mapper));
 	            }
@@ -229,7 +229,7 @@ public class StreamableHttpTransport extends AbstractTransport implements Client
 			}
 			
 			// Get content type from response
-            String contentType = response.headers().firstValue("ContentBlock-Type").orElse("").toLowerCase();
+            String contentType = response.headers().firstValue("Content-Type").orElse("").toLowerCase();
             boolean hasRequests = java.util.Arrays.asList(message).stream().anyMatch(m -> m instanceof JSONRPCRequest);
             
             if (hasRequests) {

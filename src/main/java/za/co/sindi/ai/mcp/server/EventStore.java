@@ -3,8 +3,6 @@
  */
 package za.co.sindi.ai.mcp.server;
 
-import java.util.concurrent.CompletableFuture;
-
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 
 /**
@@ -13,13 +11,13 @@ import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
  */
 public interface EventStore {
 
-	public CompletableFuture<EventId> storeEvent(final StreamId streamId, final JSONRPCMessage message);
+	public EventId storeEvent(final StreamId streamId, final JSONRPCMessage message);
 	
-	public CompletableFuture<StreamId> replayEventAfter(final EventId lastEventId, final Sender sender);
+	public StreamId replayEventAfter(final EventId lastEventId, final Sender sender);
 	
 	@FunctionalInterface
 	public static interface Sender {
 		
-		public CompletableFuture<Void> send(final EventId eventId, final JSONRPCMessage message);
+		public void send(final EventId eventId, final JSONRPCMessage message);
 	}
 }
