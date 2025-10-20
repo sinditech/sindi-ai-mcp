@@ -41,6 +41,7 @@ import za.co.sindi.ai.mcp.schema.Schema;
 import za.co.sindi.ai.mcp.server.Server;
 import za.co.sindi.commons.utils.Preconditions;
 import za.co.sindi.commons.utils.Strings;
+import za.co.sindi.commons.utils.Throwables;
 
 /**
  * @author Buhake Sindi
@@ -344,7 +345,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 			sendError(request.getId(), ErrorCodes.METHOD_NOT_FOUND, "Method not found: " + request.getMethod())
 			.exceptionally(throwable -> {
 				LOGGER.severe("Error sending method not found response.");
-				Protocol.this.onError(throwable);
+				Protocol.this.onError(Throwables.getRootCause(throwable));
 				return null;
 			});
 		} else {
@@ -359,20 +360,17 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 				Result result = handler.handle(request, extra);
 				LOGGER.info("Request handled successfully: " + request.getMethod() + ", ID: " + request.getId());
 				return result;
-			}).thenCompose(result -> sendResult(request.getId(), result))
-			.handle((response, throwable) -> {
-				if (throwable != null) {
-					LOGGER.severe("Error handling request: " + request.getMethod() + ", ID: " + request.getId());
-					if (throwable instanceof MCPError error) {
-						return sendError(request.getId(), error.getCode(), error.getMessage());
-					} else {
-						return sendError(request.getId(), ErrorCodes.INTERNAL_ERROR, Strings.isNullOrEmpty(throwable.getMessage()) ? "Internal error." : throwable.getMessage());
-					}
+			}, getExecutor()).thenCompose(result -> sendResult(request.getId(), result))
+			.exceptionallyCompose(throwable -> {
+				LOGGER.severe("Error handling request: " + request.getMethod() + ", ID: " + request.getId());
+				Throwable rootCause = Throwables.getRootCause(throwable);
+				Protocol.this.onError(rootCause);
+				if (rootCause instanceof MCPError error) {
+					return sendError(request.getId(), error.getCode(), error.getMessage());
+				} else {
+					return sendError(request.getId(), ErrorCodes.INTERNAL_ERROR, Strings.isNullOrEmpty(rootCause.getMessage()) ? "Internal error." : rootCause.getMessage());
 				}
-				
-				// If no exception, return the original result
-	            return CompletableFuture.completedFuture(response);
-			});//.thenCompose(future -> future);
+			});
 		}
 	}
 	
