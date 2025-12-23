@@ -31,7 +31,7 @@ public final class BooleanSchema extends PrimitiveSchemaDefinition {
 	}
 
 	/**
-	 * @param default1 the default to set
+	 * @param _default the default to set
 	 */
 	public void setDefault(Boolean _default) {
 		this._default = _default;

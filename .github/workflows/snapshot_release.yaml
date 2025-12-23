@@ -24,7 +24,7 @@ jobs:
       - name: Step 2 - Set up Java and Maven
         uses: actions/setup-java@v4
         with:
-          java-version: '17' # Or your desired Java version
+          java-version: '21' # Or your desired Java version
           distribution: 'temurin'
           cache: 'maven'
           # Important: This configures settings.xml for you
@@ -44,7 +44,7 @@ jobs:
           MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
 
       - name: Step 4 - Publish package
-        run: mvn --batch-mode --fail-at-end clean deploy -DskipTests -DskipITs -Dspotless.check.skip=true -e # -P release if you use a profile for release builds
+        run: mvn --batch-mode --fail-at-end clean deploy -DskipTests -DskipITs -Dspotless.check.skip=true -e
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}

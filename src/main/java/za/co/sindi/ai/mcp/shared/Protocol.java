@@ -84,7 +84,7 @@ public abstract class Protocol<T extends Transport, REQ extends Request, N exten
 	private ErrorHandler errorHandler;
 	
 	/**
-	 * @param transport
+	 * 
 	 */
 	protected Protocol() {
 		super();

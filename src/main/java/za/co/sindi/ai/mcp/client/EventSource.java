@@ -51,7 +51,6 @@ public class EventSource implements AutoCloseable {
     
     /**
 	 * @param url
-	 * @param config
 	 */
 	public EventSource(String url) {
 		this(url, HttpClient.newBuilder().build(), builder -> {});
