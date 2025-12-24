@@ -5,7 +5,7 @@
 	<groupId>za.co.sindi</groupId>
 	<artifactId>sindi-ai-mcp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Sindi AI Agent2Agent</name>
+	<name>Sindi AI MCP</name>
 	<description>The Model Context Protocol implementation in Java</description>
 	<url>https://github.com/sinditech/sindi-ai-mcp</url>
 
