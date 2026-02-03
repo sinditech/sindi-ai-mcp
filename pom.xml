@@ -5,6 +5,7 @@
 	<groupId>za.co.sindi</groupId>
 	<artifactId>sindi-ai-mcp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
 	<name>Sindi AI MCP</name>
 	<description>The Model Context Protocol implementation in Java</description>
 	<url>https://github.com/sinditech/sindi-ai-mcp</url>
@@ -86,6 +87,24 @@
 				<groupId>za.co.sindi</groupId>
 				<artifactId>sindi-commons</artifactId>
 				<version>0.0.1</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>za.co.sindi</groupId>
+				<artifactId>sindi-ai-mcp-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>za.co.sindi</groupId>
+				<artifactId>sindi-ai-mcp-client</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>za.co.sindi</groupId>
+				<artifactId>sindi-ai-mcp-server-core</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -244,4 +263,10 @@
 			</build>
 		</profile>
 	</profiles>
+	
+	<modules>
+		<module>core</module>
+		<module>client</module>
+		<module>server</module>
+	</modules>
 </project>

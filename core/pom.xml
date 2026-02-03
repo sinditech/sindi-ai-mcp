@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>za.co.sindi</groupId>
+		<artifactId>sindi-ai-mcp</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>sindi-ai-mcp-core</artifactId>
+	<name>Sindi AI MCP Core</name>
+	<description>The Model Context Protocol Core implementation in Java</description>
+	<url>https://github.com/sinditech/sindi-ai-mcp</url>
+
+	<dependencies>
+		<!--
+		https://mvnrepository.com/artifact/jakarta.json.bind/jakarta.json.bind-api -->
+		<dependency>
+			<groupId>jakarta.json.bind</groupId>
+			<artifactId>jakarta.json.bind-api</artifactId>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/jakarta.json/jakarta.json-api -->
+		<dependency>
+			<groupId>jakarta.json</groupId>
+			<artifactId>jakarta.json-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse</groupId>
+			<artifactId>yasson</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>za.co.sindi</groupId>
+			<artifactId>sindi-commons</artifactId>
+		</dependency>
+	</dependencies>
+</project>

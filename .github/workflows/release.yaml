@@ -59,71 +59,84 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
         env:
           MAVEN_GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-          
-      - name: Step 4 - Generate and update CHANGELOG.md
+
+      - name: Step 4 - Get latest tag
+        id: latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Step 5 - Generate changelog from commits
         id: changelog
         run: |
           VERSION=${{ github.event.inputs.release_version }}
-          DATE=$(date +'%Y-%m-%d')
-
-          # Find previous tag (if any)
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
-          # Collect release commits only
-          if [ -z "$PREVIOUS_TAG" ]; then
-            git log --pretty=format:"%s" \
-              | grep '^release:' \
-              | sed 's/^release: */- /' > RELEASE_NOTES.md
+          LATEST_TAG=${{ steps.latest_tag.outputs.latest_tag }}
+          
+          # Get commits since last tag or all commits if no tag exists
+          if [ -z "$LATEST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
           else
-            git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%s" \
-              | grep '^release:' \
-              | sed 's/^release: */- /' > RELEASE_NOTES.md
+            COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
           fi
-
-          # Fallback for first release
-          if [ ! -s RELEASE_NOTES.md ]; then
-            echo "- Initial release" > RELEASE_NOTES.md
+          
+          if [ -z "$COMMITS" ]; then
+            echo "No new commits found for changelog"
+            exit 1
           fi
+          
+          # Create changelog entry
+          CHANGELOG_ENTRY="## [$VERSION] - $(date +%Y-%m-%d)\n$COMMITS\n"
+          
+          echo -e "$CHANGELOG_ENTRY" > new_changelog.txt
+          
+          # Save for GitHub output (truncate if too long)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_ENTRY" | head -c 4000 >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          # Prepare changelog section
-          {
-            echo "## [$VERSION] - $DATE"
-            cat RELEASE_NOTES.md
-            echo ""
-          } > NEW_CHANGELOG_SECTION.md
-
-          # Create CHANGELOG.md if missing
+      - name: Step 6 - Update CHANGELOG.md
+        run: |
+          VERSION=${{ github.event.inputs.release_version }}
+          
+          # Create CHANGELOG.md if it doesn't exist
           if [ ! -f CHANGELOG.md ]; then
             echo "# Changelog" > CHANGELOG.md
             echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
           fi
+          
+          # Prepend new changelog entry after the header
+          {
+            # Keep the header (first 4 lines or until first ##)
+            awk '/^## / {exit} {print}' CHANGELOG.md
+            echo ""
+            cat new_changelog.txt
+            echo ""
+            # Append existing releases
+            awk '/^## / {found=1} found {print}' CHANGELOG.md
+          } > CHANGELOG.md.new
+          
+          mv CHANGELOG.md.new CHANGELOG.md
+          
+          # Show the updated changelog
+          echo "Updated CHANGELOG.md:"
+          head -n 20 CHANGELOG.md
 
-          # Insert new section at the top (after title)
-          awk '
-            NR==1 { print; print ""; system("cat NEW_CHANGELOG_SECTION.md"); next }
-            { print }
-          ' CHANGELOG.md > CHANGELOG.tmp
-
-          mv CHANGELOG.tmp CHANGELOG.md
-
-          # Expose changelog for GitHub Release
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          cat RELEASE_NOTES.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Step 5 - Commit CHANGELOG.md
-        run: |
-          git add CHANGELOG.md
-          git commit -m "docs(changelog): release v${{ github.event.inputs.release_version }}" || echo "No changes to commit"
-          git push
-
-      - name: Step 6 - Set release version
+      - name: Step 7 - Set release version
         run: mvn versions:set -DnewVersion=${{ github.event.inputs.release_version }} -DgenerateBackupPoms=false
 
-      - name: Step 7 - Confirm version
+      - name: Step 8 - Confirm version
         run: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
 
-      - name: Step 8 - Publish package
+      - name: Step 9 - Commit changelog and version changes
+        run: |
+          git add CHANGELOG.md pom.xml
+          git commit -m "chore: release version ${{ github.event.inputs.version }}" || echo "No changes to commit"
+          git push 
+
+      - name: Step 10 - Publish package
         run: |
           if [ "${{ github.event.inputs.skip_tests }}" == "true" ]; then
             mvn --batch-mode deploy -DskipTests -DskipITs -Dspotless.check.skip=true -Psign -e # -P release if you use a profile for release builds
@@ -135,16 +148,17 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }} # Passed to the GPG plugin
 
-      - name: Step 9 - Create Git tag for release
+      - name: Step 11 - Create Git tag for release
         run: |
           VERSION=${{ github.event.inputs.release_version }}
           git tag -a "v$VERSION" -m "Release version $VERSION"
           git push origin "v$VERSION"
           
-      - name: Step 10 - Create GitHub Release
+      - name: Step 12 - Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.event.inputs.release_version }}
           name: Release v${{ github.event.inputs.release_version }}
           body: |
             ${{ steps.changelog.outputs.changelog }}
+            
