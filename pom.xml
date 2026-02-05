@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>za.co.sindi</groupId>
 	<artifactId>sindi-ai-mcp</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.3</version>
 	<packaging>pom</packaging>
 	<name>Sindi AI MCP</name>
 	<description>The Model Context Protocol implementation in Java</description>
